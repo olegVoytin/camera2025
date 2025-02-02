@@ -1,5 +1,5 @@
 //
-//  SessionsService.swift
+//  SessionsManager.swift
 //  camera2025
 //
 //  Created by Олег Войтин on 02.02.2025.
@@ -8,11 +8,13 @@
 import AVFoundation
 
 @CapturingActor
-final class SessionsService {
+final class SessionsManager {
 
     let videoSession = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
     private var videoDeviceInput: AVCaptureDeviceInput?
+
+    let photoOutput = AVCapturePhotoOutput()
 
     private let audioSession = AVCaptureSession()
 
@@ -24,6 +26,7 @@ final class SessionsService {
         do {
             try addVideoInput()
             try addVideoOutput()
+            try addPhotoOutput()
         } catch {
             videoSession.commitConfiguration()
             throw error
@@ -34,6 +37,29 @@ final class SessionsService {
         videoSession.commitConfiguration()
 
         videoSession.startRunning()
+    }
+
+    func capturePhoto() {
+
+    }
+
+    func getPhotoSettings() -> AVCapturePhotoSettings {
+        var photoSettings = AVCapturePhotoSettings()
+
+        if self.photoOutput.availablePhotoCodecTypes.contains(.jpeg) {
+            photoSettings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
+        }
+
+        if self.videoDeviceInput?.device.isFlashAvailable == true {
+            photoSettings.flashMode = .off
+        }
+
+        if !photoSettings.__availablePreviewPhotoPixelFormatTypes.isEmpty {
+            photoSettings.previewPhotoFormat = [kCVPixelBufferPixelFormatTypeKey as String: photoSettings.__availablePreviewPhotoPixelFormatTypes.first!]
+        }
+        photoSettings.photoQualityPrioritization = .quality
+
+        return photoSettings
     }
 
     private func addVideoInput() throws {
@@ -82,6 +108,20 @@ final class SessionsService {
         videoSession.commitConfiguration()
     }
 
+    private func addPhotoOutput() throws {
+        if videoSession.canAddOutput(photoOutput) {
+            videoSession.addOutput(photoOutput)
+
+            photoOutput.isHighResolutionCaptureEnabled = true
+            photoOutput.isLivePhotoCaptureEnabled = false
+            photoOutput.isDepthDataDeliveryEnabled = false
+            photoOutput.maxPhotoQualityPrioritization = .quality
+        } else {
+            print("Could not add photo output to the session")
+            throw SessionError.setPhotoOutputError
+        }
+    }
+
     private func setNewTorchValue(_ newValue: AVCaptureDevice.TorchMode) {
         guard
             let device = self.videoDeviceInput?.device,
@@ -99,15 +139,21 @@ enum SessionError: Error {
     case addVideoInputError
     case addVideoOutputError
     case setTorchValueError
+    case setPhotoOutputError
 
     var localizedDescription: String {
         switch self {
         case .addVideoInputError:
             return "Could not add video input."
+
         case .addVideoOutputError:
             return "Could not add video output."
+
         case .setTorchValueError:
             return "Could not set torch value."
+
+        case .setPhotoOutputError:
+            return "Could not set photo output."
         }
     }
 }

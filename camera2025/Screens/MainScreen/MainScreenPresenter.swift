@@ -11,18 +11,18 @@ import AVFoundation
 final class MainScreenPresenter {
 
     var videoCaptureSession: AVCaptureSession {
-        captureService.sessionsService.videoSession
+        captureManager.sessionsManager.videoSession
     }
 
-    private let captureService = CaptureService()
+    lazy var actionHandler = MainScreenActionHandler(
+        onTapPhotoButton: {
+
+        }
+    )
+
+    private let captureManager = CaptureManager()
 
     func startSession() {
-        captureService.startCapture()
-    }
-
-    func createActionHandler() -> MainScreenActionHandler {
-        MainScreenActionHandler(onTapPhotoButton: {
-
-        })
+        captureManager.startCapture()
     }
 }

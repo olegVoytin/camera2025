@@ -1,18 +1,18 @@
 //
-//  CaptureService.swift
+//  CaptureManager.swift
 //  camera2025
 //
 //  Created by Олег Войтин on 02.02.2025.
 //
 
 @CapturingActor
-final class CaptureService {
+final class CaptureManager {
 
-    let sessionsService = SessionsService()
+    let sessionsManager = SessionsManager()
 
     func startCapture() {
         do {
-            try sessionsService.start()
+            try sessionsManager.start()
         } catch {
             guard let error = error as? SessionError else {
                 return
