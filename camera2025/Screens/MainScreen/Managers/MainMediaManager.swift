@@ -25,15 +25,24 @@ final class MainMediaManager {
     func startCapture(photoNotificationsObserver: PhotoCaptureObserver) {
         do {
             try deviceInputManager.start()
-            try videoSessionManager.start(videoDeviceInput: deviceInputManager.videoDeviceInput)
+            try videoSessionManager.start(
+                videoDeviceInput: deviceInputManager.videoDeviceInput,
+                photoOutput: photoManager.photoOutput
+            )
         } catch {
-            guard let error = error as? SessionError else {
-                return
-            }
+            guard let error = error as? SessionError else { return }
             print(error.localizedDescription)
         }
 
         photoManager.delegate = photoNotificationsObserver
+    }
+
+    func takePhoto() throws {
+        try photoManager.takePhoto()
+    }
+
+    func savePhotoInGallery(_ imageData: Data) async throws {
+        try await photoManager.savePhotoInGallery(imageData)
     }
 }
 
@@ -41,9 +50,10 @@ enum SessionError: Error {
     case addVideoInputError
     case addAudioInputError
     case addVideoOutputError
+    case addPhotoOutputError
     case setTorchValueError
-    case setPhotoOutputError
     case makePhotoError
+    case savePhotoToLibraryError
 
     var localizedDescription: String {
         switch self {
@@ -56,14 +66,17 @@ enum SessionError: Error {
         case .setTorchValueError:
             return "Could not set torch value."
 
-        case .setPhotoOutputError:
-            return "Could not set photo output."
-
         case .addAudioInputError:
             return "Could not add audio input."
 
         case .makePhotoError:
             return "Could not make photo."
+
+        case .addPhotoOutputError:
+            return "Could not add photo output."
+
+        case .savePhotoToLibraryError:
+            return "Could not save photo to library."
         }
     }
 }

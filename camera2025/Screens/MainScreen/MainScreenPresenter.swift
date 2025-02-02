@@ -14,11 +14,11 @@ final class MainScreenPresenter: NSObject {
         mainMediaManager.videoSession
     }
 
-    lazy var actionHandler = MainScreenActionHandler(
-        onTapPhotoButton: {
-
+    lazy var actionHandler = MainScreenActionHandler(triggerAction: { action in
+        Task { @CapturingActor in
+            self.handleAction(action)
         }
-    )
+    })
 
     private let photoCaptureObserver = PhotoCaptureObserver()
 
@@ -33,6 +33,13 @@ final class MainScreenPresenter: NSObject {
     func startSession() {
         mainMediaManager.startCapture(photoNotificationsObserver: photoCaptureObserver)
     }
+
+    private func handleAction(_ action: Action) {
+        switch action {
+        case.takePhoto:
+            try? mainMediaManager.takePhoto()
+        }
+    }
 }
 
 extension MainScreenPresenter: PhotoCaptureDelegate {
@@ -41,7 +48,9 @@ extension MainScreenPresenter: PhotoCaptureDelegate {
     }
     
     func photoDataCreated(data: Data) {
-
+        Task {
+            try? await mainMediaManager.savePhotoInGallery(data)
+        }
     }
     
     func photoDidCaptured() {

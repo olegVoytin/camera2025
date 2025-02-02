@@ -6,5 +6,9 @@
 //
 
 struct MainScreenActionHandler: Sendable {
-    let onTapPhotoButton: @Sendable () -> Void
+    let triggerAction: @Sendable (Action) -> Void
+}
+
+enum Action {
+    case takePhoto
 }

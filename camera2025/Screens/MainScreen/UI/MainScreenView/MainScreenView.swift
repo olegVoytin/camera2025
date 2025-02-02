@@ -21,7 +21,7 @@ struct MainScreenView: View {
                 Spacer()
 
                 Button(
-                    action: { actionHandler.onTapPhotoButton() },
+                    action: { actionHandler.triggerAction(.takePhoto) },
                     label: {
                         Color.white
                             .frame(width: 100, height: 100)

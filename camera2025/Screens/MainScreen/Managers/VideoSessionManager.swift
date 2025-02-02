@@ -17,7 +17,7 @@ final class VideoSessionManager {
         self.videoSession = videoSession
     }
 
-    func start(videoDeviceInput: AVCaptureDeviceInput) throws {
+    func start(videoDeviceInput: AVCaptureDeviceInput, photoOutput: AVCapturePhotoOutput) throws {
         videoSession.beginConfiguration()
 
         videoSession.sessionPreset = .high
@@ -25,6 +25,7 @@ final class VideoSessionManager {
         do {
             try addVideoInput(videoDeviceInput: videoDeviceInput)
             try addVideoOutput()
+            try addPhotoOutput(photoOutput: photoOutput)
         } catch {
             videoSession.commitConfiguration()
             throw error
@@ -36,14 +37,10 @@ final class VideoSessionManager {
     }
 
     private func addVideoInput(videoDeviceInput: AVCaptureDeviceInput) throws {
-        if videoSession.canAddInput(videoDeviceInput) {
-            videoSession.addInput(videoDeviceInput)
-
-            
-        } else {
-            print("Couldn't add video device input to the session.")
+        guard videoSession.canAddInput(videoDeviceInput) else {
             throw SessionError.addVideoInputError
         }
+        videoSession.addInput(videoDeviceInput)
     }
 
     private func addVideoOutput() throws {
@@ -62,5 +59,10 @@ final class VideoSessionManager {
         }
 
         videoSession.commitConfiguration()
+    }
+
+    private func addPhotoOutput(photoOutput: AVCapturePhotoOutput) throws {
+        guard videoSession.canAddOutput(photoOutput) else { throw SessionError.addPhotoOutputError }
+        videoSession.addOutput(photoOutput)
     }
 }
