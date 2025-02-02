@@ -20,13 +20,23 @@ struct MainScreenView: View {
             VStack {
                 Spacer()
 
-                Button(
-                    action: { actionHandler.triggerAction(.takePhoto) },
-                    label: {
-                        Color.white
-                            .frame(width: 100, height: 100)
-                    }
-                )
+                HStack(spacing: 30) {
+                    Button(
+                        action: { actionHandler.triggerAction(.takePhoto) },
+                        label: {
+                            Color.red
+                                .frame(width: 50, height: 50)
+                        }
+                    )
+
+                    Button(
+                        action: { actionHandler.triggerAction(.takePhoto) },
+                        label: {
+                            Color.white
+                                .frame(width: 100, height: 100)
+                        }
+                    )
+                }
                 .padding(.bottom, 20)
             }
         }
