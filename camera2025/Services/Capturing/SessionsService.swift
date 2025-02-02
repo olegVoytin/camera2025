@@ -10,7 +10,7 @@ import AVFoundation
 @CapturingActor
 final class SessionsService {
 
-    private let videoSession = AVCaptureSession()
+    let videoSession = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
     private var videoDeviceInput: AVCaptureDeviceInput?
 
@@ -90,4 +90,15 @@ enum SessionError: Error {
     case addVideoInputError
     case addVideoOutputError
     case setTorchValueError
+
+    var localizedDescription: String {
+        switch self {
+        case .addVideoInputError:
+            return "Could not add video input."
+        case .addVideoOutputError:
+            return "Could not add video output."
+        case .setTorchValueError:
+            return "Could not set torch value."
+        }
+    }
 }

@@ -6,18 +6,19 @@
 //
 
 import SwiftUI
-import AVFoundation
+@preconcurrency import AVFoundation
 
 struct CameraPreview: UIViewRepresentable {
-    let session: AVCaptureSession
+    let presenter: PreviewPresenter
 
     func makeUIView(context: Context) -> PreviewView {
-        let view = PreviewView()
-        view.session = session
-        return view
+        PreviewView()
     }
 
     func updateUIView(_ uiView: PreviewView, context: Context) {
-        uiView.session = session
+        Task { @MainActor in
+            let videoCaptureSession = await presenter.videoCaptureSession
+            uiView.session = videoCaptureSession
+        }
     }
 }
