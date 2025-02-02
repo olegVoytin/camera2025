@@ -11,7 +11,10 @@ import SwiftUI
 struct camera2025App: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            InitialView()
+                .onAppear {
+                    
+                }
         }
     }
 }
