@@ -20,7 +20,11 @@ final class MainScreenPresenter {
         }
     )
 
-    private let mainMediaManager = MainMediaManager()
+    private let mainMediaManager: MainMediaManager
+
+    init(mainMediaManager: MainMediaManager) {
+        self.mainMediaManager = mainMediaManager
+    }
 
     func startSession() {
         mainMediaManager.startCapture()

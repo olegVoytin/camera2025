@@ -15,14 +15,19 @@ final class AppManager: ObservableObject {
     @Published var presentMainScreen: Bool = false
 
     func startCameraPreview() async {
-        let mainScreenPresenter = await MainScreenPresenter()
-        await mainScreenPresenter.startSession()
+        do {
+            let mainMediaManager = try await MainMediaManager(deviceInputManager: DeviceInputManager())
+            let mainScreenPresenter = await MainScreenPresenter(mainMediaManager: mainMediaManager)
+            await mainScreenPresenter.startSession()
 
-        self.mainScreenData = await (
-            mainScreenPresenter.actionHandler,
-            mainScreenPresenter.videoCaptureSession
-        )
-        presentMainScreen = true
+            self.mainScreenData = await (
+                mainScreenPresenter.actionHandler,
+                mainScreenPresenter.videoCaptureSession
+            )
+            presentMainScreen = true
+        } catch {
+            fatalError()
+        }
     }
 }
 

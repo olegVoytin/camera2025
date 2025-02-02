@@ -12,19 +12,18 @@ final class VideoSessionManager {
 
     let videoSession: AVCaptureSession
     private let videoOutput = AVCaptureVideoDataOutput()
-    private var videoDeviceInput: AVCaptureDeviceInput?
 
     init(videoSession: AVCaptureSession) {
         self.videoSession = videoSession
     }
 
-    func start() throws {
+    func start(videoDeviceInput: AVCaptureDeviceInput) throws {
         videoSession.beginConfiguration()
 
         videoSession.sessionPreset = .high
 
         do {
-            try addVideoInput()
+            try addVideoInput(videoDeviceInput: videoDeviceInput)
             try addVideoOutput()
         } catch {
             videoSession.commitConfiguration()
@@ -36,28 +35,11 @@ final class VideoSessionManager {
         videoSession.startRunning()
     }
 
-    private func addVideoInput() throws {
-        guard
-            let videoDevice = AVCaptureDevice.default(
-                .builtInWideAngleCamera,
-                for: .video,
-                position: .front
-            )
-        else {
-            print("Default video device is unavailable.")
-            throw SessionError.addVideoInputError
-        }
-        let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
-
+    private func addVideoInput(videoDeviceInput: AVCaptureDeviceInput) throws {
         if videoSession.canAddInput(videoDeviceInput) {
             videoSession.addInput(videoDeviceInput)
 
-            try videoDeviceInput.device.lockForConfiguration()
-            videoDeviceInput.device.setExposureTargetBias(0, completionHandler: nil)
-            videoDeviceInput.device.exposureMode = .continuousAutoExposure
-            videoDeviceInput.device.unlockForConfiguration()
-
-            self.videoDeviceInput = videoDeviceInput
+            
         } else {
             print("Couldn't add video device input to the session.")
             throw SessionError.addVideoInputError

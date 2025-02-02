@@ -14,10 +14,16 @@ final class MainMediaManager {
 
     private lazy var videoSessionManager = VideoSessionManager(videoSession: videoSession)
     private let audioSessionManager = AudioSessionManager()
+    private let deviceInputManager: DeviceInputManager
+
+    init(deviceInputManager: DeviceInputManager) throws {
+        self.deviceInputManager = try DeviceInputManager()
+    }
 
     func startCapture() {
         do {
-            try videoSessionManager.start()
+            try deviceInputManager.start()
+            try videoSessionManager.start(videoDeviceInput: deviceInputManager.videoDeviceInput)
         } catch {
             guard let error = error as? SessionError else {
                 return
@@ -29,6 +35,7 @@ final class MainMediaManager {
 
 enum SessionError: Error {
     case addVideoInputError
+    case addAudioInputError
     case addVideoOutputError
     case setTorchValueError
     case setPhotoOutputError
@@ -46,6 +53,9 @@ enum SessionError: Error {
 
         case .setPhotoOutputError:
             return "Could not set photo output."
+
+        case .addAudioInputError:
+            return "Could not add audio input."
         }
     }
 }
