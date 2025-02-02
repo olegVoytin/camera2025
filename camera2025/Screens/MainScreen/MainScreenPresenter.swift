@@ -11,7 +11,7 @@ import AVFoundation
 final class MainScreenPresenter {
 
     var videoCaptureSession: AVCaptureSession {
-        captureManager.sessionsManager.videoSession
+        mainMediaManager.videoSession
     }
 
     lazy var actionHandler = MainScreenActionHandler(
@@ -20,9 +20,9 @@ final class MainScreenPresenter {
         }
     )
 
-    private let captureManager = CaptureManager()
+    private let mainMediaManager = MainMediaManager()
 
     func startSession() {
-        captureManager.startCapture()
+        mainMediaManager.startCapture()
     }
 }
