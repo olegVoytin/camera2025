@@ -18,13 +18,22 @@ final class SessionsService {
 
     func start() throws {
         videoSession.beginConfiguration()
-        defer { videoSession.commitConfiguration() }
 
         videoSession.sessionPreset = .high
 
-        try addVideoInput()
-        try addVideoOutput()
-        try setNewTorchValue(.off)
+        do {
+            try addVideoInput()
+            try addVideoOutput()
+        } catch {
+            videoSession.commitConfiguration()
+            throw error
+        }
+
+        setNewTorchValue(.off)
+
+        videoSession.commitConfiguration()
+
+        videoSession.startRunning()
     }
 
     private func addVideoInput() throws {
@@ -47,6 +56,8 @@ final class SessionsService {
             videoDeviceInput.device.setExposureTargetBias(0, completionHandler: nil)
             videoDeviceInput.device.exposureMode = .continuousAutoExposure
             videoDeviceInput.device.unlockForConfiguration()
+
+            self.videoDeviceInput = videoDeviceInput
         } else {
             print("Couldn't add video device input to the session.")
             throw SessionError.addVideoInputError
@@ -71,16 +82,14 @@ final class SessionsService {
         videoSession.commitConfiguration()
     }
 
-    private func setNewTorchValue(_ newValue: AVCaptureDevice.TorchMode) throws {
+    private func setNewTorchValue(_ newValue: AVCaptureDevice.TorchMode) {
         guard
             let device = self.videoDeviceInput?.device,
             device.hasTorch,
             device.isTorchModeSupported(newValue)
-        else {
-            throw SessionError.setTorchValueError
-        }
+        else { return }
 
-        try device.lockForConfiguration()
+        try? device.lockForConfiguration()
         device.torchMode = newValue
         device.unlockForConfiguration()
     }

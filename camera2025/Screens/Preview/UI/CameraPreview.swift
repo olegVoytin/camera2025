@@ -12,7 +12,14 @@ struct CameraPreview: UIViewRepresentable {
     let presenter: PreviewPresenter
 
     func makeUIView(context: Context) -> PreviewView {
-        PreviewView()
+        let view = PreviewView()
+
+//        Task { @MainActor in
+//            let session = await presenter.videoCaptureSession
+//            view.session = session
+//        }
+
+        return view
     }
 
     func updateUIView(_ uiView: PreviewView, context: Context) {

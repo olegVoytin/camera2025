@@ -7,29 +7,36 @@
 
 import SwiftUI
 
+@MainActor
+final class AppService: ObservableObject {
+
+    var cameraPreviewPresenter: PreviewPresenter?
+    @Published var presentCameraPreview: Bool = false
+
+    func startCameraPreview() async {
+        let newPreviewPresenter = await PreviewPresenter()
+        await newPreviewPresenter.startSession()
+        cameraPreviewPresenter = newPreviewPresenter
+        presentCameraPreview = true
+    }
+}
+
 @main
 struct camera2025App: App {
 
-    @State private var sessionStarted = false
-    @State private var presenter: PreviewPresenter?
+    @StateObject private var appService = AppService()
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                InitialView()
-                    .onAppear {
-                        Task { @MainActor in
-                            let presenter = await PreviewPresenter()
-                            await presenter.startSession()
-                            sessionStarted = true
-                        }
+            InitialView()
+                .task {
+                    await appService.startCameraPreview()
+                }
+                .fullScreenCover(isPresented: $appService.presentCameraPreview) {
+                    if let previewPresenter = appService.cameraPreviewPresenter {
+                        CameraPreview(presenter: previewPresenter)
                     }
-                    .navigationDestination(isPresented: $sessionStarted) {
-                        if let presenter {
-                            CameraPreview(presenter: presenter)
-                        }
-                    }
-            }
+                }
         }
     }
 }
