@@ -6,9 +6,25 @@
 //
 
 import UIKit
-import AVFoundation
+import SwiftUI
+@preconcurrency import AVFoundation
 
-final class PreviewView: UIView {
+struct PreviewView: UIViewRepresentable {
+    let videoCaptureSession: AVCaptureSession
+
+    func makeUIView(context: Context) -> PreviewUIKitView {
+        let view = PreviewUIKitView()
+        view.session = videoCaptureSession
+        return view
+    }
+
+    func updateUIView(_ uiView: PreviewUIKitView, context: Context) {
+        guard uiView.session == nil else { return }
+        uiView.session = videoCaptureSession
+    }
+}
+
+final class PreviewUIKitView: UIView {
     var videoPreviewLayer: AVCaptureVideoPreviewLayer {
         guard let layer = layer as? AVCaptureVideoPreviewLayer else { return AVCaptureVideoPreviewLayer() }
         return layer

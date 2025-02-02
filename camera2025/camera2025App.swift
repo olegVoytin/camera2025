@@ -6,18 +6,23 @@
 //
 
 import SwiftUI
+@preconcurrency import AVFoundation
 
 @MainActor
 final class AppService: ObservableObject {
 
-    var cameraPreviewPresenter: PreviewPresenter?
-    @Published var presentCameraPreview: Bool = false
+    var mainScreenData: (MainScreenActionHandler, AVCaptureSession)?
+    @Published var presentMainScreen: Bool = false
 
     func startCameraPreview() async {
-        let newPreviewPresenter = await PreviewPresenter()
-        await newPreviewPresenter.startSession()
-        cameraPreviewPresenter = newPreviewPresenter
-        presentCameraPreview = true
+        let mainScreenPresenter = await MainScreenPresenter()
+        await mainScreenPresenter.startSession()
+
+        self.mainScreenData = await (
+            mainScreenPresenter.createActionHandler(),
+            mainScreenPresenter.videoCaptureSession
+        )
+        presentMainScreen = true
     }
 }
 
@@ -32,9 +37,12 @@ struct camera2025App: App {
                 .task {
                     await appService.startCameraPreview()
                 }
-                .fullScreenCover(isPresented: $appService.presentCameraPreview) {
-                    if let previewPresenter = appService.cameraPreviewPresenter {
-                        CameraPreview(presenter: previewPresenter)
+                .fullScreenCover(isPresented: $appService.presentMainScreen) {
+                    if let mainScreenData = appService.mainScreenData {
+                        MainScreenView(
+                            videoCaptureSession: mainScreenData.1,
+                            actionHandler: mainScreenData.0
+                        )
                     }
                 }
         }

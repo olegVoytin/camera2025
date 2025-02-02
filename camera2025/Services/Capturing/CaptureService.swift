@@ -10,7 +10,7 @@ final class CaptureService {
 
     let sessionsService = SessionsService()
 
-    func start() {
+    func startCapture() {
         do {
             try sessionsService.start()
         } catch {
