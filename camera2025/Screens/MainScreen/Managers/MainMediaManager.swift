@@ -14,13 +14,15 @@ final class MainMediaManager {
 
     private lazy var videoSessionManager = VideoSessionManager(videoSession: videoSession)
     private let audioSessionManager = AudioSessionManager()
+    private let photoManager = PhotoManager()
+
     private let deviceInputManager: DeviceInputManager
 
     init(deviceInputManager: DeviceInputManager) throws {
         self.deviceInputManager = try DeviceInputManager()
     }
 
-    func startCapture() {
+    func startCapture(photoNotificationsObserver: PhotoCaptureObserver) {
         do {
             try deviceInputManager.start()
             try videoSessionManager.start(videoDeviceInput: deviceInputManager.videoDeviceInput)
@@ -30,6 +32,8 @@ final class MainMediaManager {
             }
             print(error.localizedDescription)
         }
+
+        photoManager.delegate = photoNotificationsObserver
     }
 }
 
@@ -39,6 +43,7 @@ enum SessionError: Error {
     case addVideoOutputError
     case setTorchValueError
     case setPhotoOutputError
+    case makePhotoError
 
     var localizedDescription: String {
         switch self {
@@ -56,6 +61,9 @@ enum SessionError: Error {
 
         case .addAudioInputError:
             return "Could not add audio input."
+
+        case .makePhotoError:
+            return "Could not make photo."
         }
     }
 }

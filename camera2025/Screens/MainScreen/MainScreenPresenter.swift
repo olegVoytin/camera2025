@@ -8,7 +8,7 @@
 import AVFoundation
 
 @CapturingActor
-final class MainScreenPresenter {
+final class MainScreenPresenter: NSObject {
 
     var videoCaptureSession: AVCaptureSession {
         mainMediaManager.videoSession
@@ -20,13 +20,31 @@ final class MainScreenPresenter {
         }
     )
 
+    private let photoCaptureObserver = PhotoCaptureObserver()
+
     private let mainMediaManager: MainMediaManager
 
     init(mainMediaManager: MainMediaManager) {
         self.mainMediaManager = mainMediaManager
+        super.init()
+        photoCaptureObserver.delegate = self
     }
 
     func startSession() {
-        mainMediaManager.startCapture()
+        mainMediaManager.startCapture(photoNotificationsObserver: photoCaptureObserver)
+    }
+}
+
+extension MainScreenPresenter: PhotoCaptureDelegate {
+    func photoWillCaptured() {
+
+    }
+    
+    func photoDataCreated(data: Data) {
+
+    }
+    
+    func photoDidCaptured() {
+
     }
 }
