@@ -11,13 +11,17 @@ import AVFoundation
 final class VideoSessionManager {
 
     private let videoSession: AVCaptureSession
-    private let videoOutput = AVCaptureVideoDataOutput()
+    private let videoOutput: AVCaptureVideoDataOutput
 
-    init(videoSession: AVCaptureSession) {
+    init(videoSession: AVCaptureSession, videoOutput: AVCaptureVideoDataOutput) {
         self.videoSession = videoSession
+        self.videoOutput = videoOutput
     }
 
-    func start(videoDeviceInput: AVCaptureDeviceInput, photoOutput: AVCapturePhotoOutput) throws {
+    func start(
+        videoDeviceInput: AVCaptureDeviceInput,
+        photoOutput: AVCapturePhotoOutput
+    ) throws {
         videoSession.beginConfiguration()
 
         videoSession.sessionPreset = .high

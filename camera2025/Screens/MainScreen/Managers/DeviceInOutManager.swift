@@ -1,5 +1,5 @@
 //
-//  DeviceInputManager.swift
+//  DeviceInOutManager.swift
 //  camera2025
 //
 //  Created by Олег Войтин on 02.02.2025.
@@ -8,9 +8,14 @@
 import AVFoundation
 
 @MainMediaActor
-final class DeviceInputManager {
+final class DeviceInOutManager {
     var videoDeviceInput: AVCaptureDeviceInput
+    let videoOutput = AVCaptureVideoDataOutput()
+
     var audioDeviceInput: AVCaptureDeviceInput
+    let audioOutput = AVCaptureAudioDataOutput()
+
+    private let bufferQueue = DispatchQueue(label: "com.example.camera2025.bufferQueue")
 
     init() throws {
         if let videoDevice = AVCaptureDevice.default(
@@ -30,10 +35,16 @@ final class DeviceInputManager {
         }
     }
 
-    func start() throws {
+    func start(
+        videoBufferDelegate: AVCaptureVideoDataOutputSampleBufferDelegate,
+        audioBufferDelegate: AVCaptureAudioDataOutputSampleBufferDelegate
+    ) throws {
         try videoDeviceInput.device.lockForConfiguration()
         videoDeviceInput.device.setExposureTargetBias(0, completionHandler: nil)
         videoDeviceInput.device.exposureMode = .continuousAutoExposure
         videoDeviceInput.device.unlockForConfiguration()
+
+        videoOutput.setSampleBufferDelegate(videoBufferDelegate, queue: bufferQueue)
+        audioOutput.setSampleBufferDelegate(audioBufferDelegate, queue: bufferQueue)
     }
 }

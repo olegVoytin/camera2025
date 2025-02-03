@@ -12,26 +12,32 @@ final class MainMediaManager {
 
     let videoSession = AVCaptureSession()
 
-    private lazy var videoSessionManager = VideoSessionManager(videoSession: videoSession)
-    private let audioSessionManager = AudioSessionManager()
-    
+    private lazy var videoSessionManager = VideoSessionManager(
+        videoSession: videoSession,
+        videoOutput: deviceInOutManager.videoOutput
+    )
+    private lazy var audioSessionManager = AudioSessionManager(audioOutput: deviceInOutManager.audioOutput)
+
     private let photoTakingManager = PhotoTakingManager()
     private let videoRecordingManager = VideoRecordingManager()
 
-    private let deviceInputManager: DeviceInputManager
+    private let deviceInOutManager: DeviceInOutManager
 
-    init(deviceInputManager: DeviceInputManager) throws {
-        self.deviceInputManager = try DeviceInputManager()
+    init(deviceInputManager: DeviceInOutManager) throws {
+        self.deviceInOutManager = try DeviceInOutManager()
     }
 
     func startCapture(photoNotificationsObserver: PhotoCaptureObserver) {
         do {
-            try deviceInputManager.start()
+            try deviceInOutManager.start(
+                videoBufferDelegate: videoRecordingManager,
+                audioBufferDelegate: videoRecordingManager
+            )
             try videoSessionManager.start(
-                videoDeviceInput: deviceInputManager.videoDeviceInput,
+                videoDeviceInput: deviceInOutManager.videoDeviceInput,
                 photoOutput: photoTakingManager.photoOutput
             )
-            try audioSessionManager.start(audioInput: deviceInputManager.audioDeviceInput)
+            try audioSessionManager.start(audioInput: deviceInOutManager.audioDeviceInput)
         } catch {
             guard let error = error as? SessionError else { return }
             print(error.localizedDescription)
