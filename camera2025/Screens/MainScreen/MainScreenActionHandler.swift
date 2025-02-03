@@ -11,4 +11,5 @@ struct MainScreenActionHandler: Sendable {
 
 enum Action {
     case takePhoto
+    case startVideoRecording
 }

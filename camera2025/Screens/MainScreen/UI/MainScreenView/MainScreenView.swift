@@ -22,7 +22,7 @@ struct MainScreenView: View {
 
                 HStack(spacing: 30) {
                     Button(
-                        action: { actionHandler.triggerAction(.takePhoto) },
+                        action: { actionHandler.triggerAction(.startVideoRecording) },
                         label: {
                             Color.red
                                 .frame(width: 50, height: 50)

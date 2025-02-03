@@ -7,7 +7,7 @@
 
 import AVFoundation
 
-@CapturingActor
+@MainMediaActor
 final class DeviceInputManager {
     var videoDeviceInput: AVCaptureDeviceInput
     var audioDeviceInput: AVCaptureDeviceInput

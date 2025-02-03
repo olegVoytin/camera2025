@@ -1,5 +1,5 @@
 //
-//  PhotoManager.swift
+//  PhotoTakingManager.swift
 //  camera2025
 //
 //  Created by Олег Войтин on 02.02.2025.
@@ -9,8 +9,8 @@ import AVFoundation
 import Photos
 import UIKit
 
-@CapturingActor
-final class PhotoManager {
+@MainMediaActor
+final class PhotoTakingManager {
 
     let photoOutput = AVCapturePhotoOutput()
     weak var delegate: AVCapturePhotoCaptureDelegate?

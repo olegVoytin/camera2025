@@ -7,14 +7,16 @@
 
 import AVFoundation
 
-@CapturingActor
+@MainMediaActor
 final class MainMediaManager {
 
     let videoSession = AVCaptureSession()
 
     private lazy var videoSessionManager = VideoSessionManager(videoSession: videoSession)
     private let audioSessionManager = AudioSessionManager()
-    private let photoManager = PhotoManager()
+    
+    private let photoTakingManager = PhotoTakingManager()
+    private let videoRecordingManager = VideoRecordingManager()
 
     private let deviceInputManager: DeviceInputManager
 
@@ -27,22 +29,27 @@ final class MainMediaManager {
             try deviceInputManager.start()
             try videoSessionManager.start(
                 videoDeviceInput: deviceInputManager.videoDeviceInput,
-                photoOutput: photoManager.photoOutput
+                photoOutput: photoTakingManager.photoOutput
             )
+            try audioSessionManager.start(audioInput: deviceInputManager.audioDeviceInput)
         } catch {
             guard let error = error as? SessionError else { return }
             print(error.localizedDescription)
         }
 
-        photoManager.delegate = photoNotificationsObserver
+        photoTakingManager.delegate = photoNotificationsObserver
     }
 
     func takePhoto() throws {
-        try photoManager.takePhoto()
+        try photoTakingManager.takePhoto()
     }
 
     func savePhotoInGallery(_ imageData: Data) async throws {
-        try await photoManager.savePhotoInGallery(imageData)
+        try await photoTakingManager.savePhotoInGallery(imageData)
+    }
+
+    func startVideoRecording() {
+        audioSessionManager.startRunning()
     }
 }
 

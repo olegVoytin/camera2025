@@ -7,10 +7,10 @@
 
 import AVFoundation
 
-@CapturingActor
+@MainMediaActor
 final class VideoSessionManager {
 
-    let videoSession: AVCaptureSession
+    private let videoSession: AVCaptureSession
     private let videoOutput = AVCaptureVideoDataOutput()
 
     init(videoSession: AVCaptureSession) {

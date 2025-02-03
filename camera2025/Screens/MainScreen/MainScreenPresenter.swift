@@ -7,7 +7,7 @@
 
 import AVFoundation
 
-@CapturingActor
+@MainMediaActor
 final class MainScreenPresenter: NSObject {
 
     var videoCaptureSession: AVCaptureSession {
@@ -15,7 +15,7 @@ final class MainScreenPresenter: NSObject {
     }
 
     lazy var actionHandler = MainScreenActionHandler(triggerAction: { action in
-        Task { @CapturingActor in
+        Task { @MainMediaActor in
             self.handleAction(action)
         }
     })
@@ -38,6 +38,9 @@ final class MainScreenPresenter: NSObject {
         switch action {
         case.takePhoto:
             try? mainMediaManager.takePhoto()
+
+        case .startVideoRecording:
+            break
         }
     }
 }

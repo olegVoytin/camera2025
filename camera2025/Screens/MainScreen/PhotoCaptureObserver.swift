@@ -7,7 +7,7 @@
 
 import AVFoundation
 
-@CapturingActor
+@MainMediaActor
 protocol PhotoCaptureDelegate: AnyObject {
     func photoWillCaptured()
     func photoDataCreated(data: Data)
@@ -16,13 +16,13 @@ protocol PhotoCaptureDelegate: AnyObject {
 
 final class PhotoCaptureObserver: NSObject, AVCapturePhotoCaptureDelegate, Sendable {
 
-    @CapturingActor weak var delegate: PhotoCaptureDelegate?
+    @MainMediaActor weak var delegate: PhotoCaptureDelegate?
 
     func photoOutput(
         _ output: AVCapturePhotoOutput,
         willCapturePhotoFor resolvedSettings: AVCaptureResolvedPhotoSettings
     ) {
-        Task { @CapturingActor in
+        Task { @MainMediaActor in
             delegate?.photoWillCaptured()
         }
     }
@@ -33,7 +33,7 @@ final class PhotoCaptureObserver: NSObject, AVCapturePhotoCaptureDelegate, Senda
         error: Error?
     ) {
         guard let data = photo.fileDataRepresentation() else { return }
-        Task { @CapturingActor in
+        Task { @MainMediaActor in
             delegate?.photoDataCreated(data: data)
         }
     }
@@ -43,7 +43,7 @@ final class PhotoCaptureObserver: NSObject, AVCapturePhotoCaptureDelegate, Senda
         didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings,
         error: Error?
     ) {
-        Task { @CapturingActor in
+        Task { @MainMediaActor in
             delegate?.photoDidCaptured()
         }
     }
