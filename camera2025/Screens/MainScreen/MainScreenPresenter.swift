@@ -70,6 +70,7 @@ final class MainScreenPresenter: NSObject {
 }
 
 extension MainScreenPresenter: PhotoCaptureDelegate {
+    
     func photoWillCaptured() {
 
     }

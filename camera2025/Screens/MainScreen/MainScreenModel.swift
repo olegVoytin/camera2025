@@ -5,6 +5,9 @@
 //  Created by Олег Войтин on 02.02.2025.
 //
 
+import Observation
+
+@Observable
 final class MainScreenModel {
 
     var isTakingPhotoPossible: Bool = true
@@ -14,7 +17,7 @@ final class MainScreenModel {
 
     let triggerAction: (Action) -> Void
 
-    internal init(triggerAction: @escaping (Action) -> Void) {
+    init(triggerAction: @escaping (Action) -> Void) {
         self.triggerAction = triggerAction
     }
 }

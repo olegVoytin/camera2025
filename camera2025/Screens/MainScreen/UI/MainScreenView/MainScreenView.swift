@@ -34,17 +34,38 @@ struct MainScreenView: View {
                     )
                     .allowsHitTesting(model.isVideoRecordingPossible)
 
-                    Button(
-                        action: { model.triggerAction(.takePhoto) },
-                        label: {
-                            Color.white
-                                .frame(width: 100, height: 100)
-                        }
-                    )
-                    .allowsHitTesting(model.isTakingPhotoPossible)
+                    PhotoButton(model: model)
                 }
                 .padding(.bottom, 20)
             }
         }
+    }
+}
+
+private struct PhotoButton: View {
+
+    let model: MainScreenModel
+    @State private var isPressed: Bool = false
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.white, lineWidth: 4)
+                .frame(width: 80, height: 80)
+
+            Circle()
+                .fill(Color.white)
+                .frame(width: 70, height: 70)
+                .scaleEffect(isPressed ? 0.9 : 1.0)
+                .animation(.interactiveSpring, value: isPressed)
+        }
+        .onLongPressGesture(
+            minimumDuration: 0,
+            pressing: { pressed in
+                isPressed = pressed
+            },
+            perform: {}
+        )
+        .allowsHitTesting(model.isTakingPhotoPossible)
     }
 }
