@@ -74,15 +74,12 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
         from connection: AVCaptureConnection
     ) {
         Task { @VideoRecordingActor in
-            //обрабатываем захваченные феймы
             switch recordingState {
-                //старт записи видео
             case .start:
                 setupVideoInputIfNeeded(sampleBuffer: sampleBuffer)
                 setupAudioInputIfNeeded(sampleBuffer: sampleBuffer)
                 await startRecordingIfReady(sampleBuffer: sampleBuffer)
 
-                //запись видео
             case .recording:
                 captureVideoBuffer(sampleBuffer: sampleBuffer)
                 captureAudioBuffer(sampleBuffer: sampleBuffer)
@@ -124,9 +121,11 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             previousVideoOrientation: previousVideoOrientation,
             currentOrientation: currentOrientation
         )
-        assetWriter.startWritingIfReady(buffer: sampleBuffer)
+        let isWritingStarted = assetWriter.startWritingIfReady(buffer: sampleBuffer)
 
-        recordingState = .recording
+        if isWritingStarted {
+            recordingState = .recording
+        }
     }
 
     private func captureVideoBuffer(sampleBuffer: CMSampleBuffer) {
@@ -150,10 +149,6 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             recordingState == .recording
         else { return }
         assetWriter.writeAudio(buffer: sampleBuffer)
-    }
-
-    private func handleSuccessRecording(outputFileURL: URL?) {
-        self.assetWriter = nil
     }
 
     @MainActor

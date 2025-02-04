@@ -6,7 +6,12 @@
 //
 
 final class MainScreenModel {
+
+    var isTakingPhotoPossible: Bool = true
+
     var isVideoRecordingActive: Bool = false
+    var isVideoRecordingPossible: Bool = true
+
     let triggerAction: (Action) -> Void
 
     internal init(triggerAction: @escaping (Action) -> Void) {

@@ -32,6 +32,7 @@ struct MainScreenView: View {
                                 .frame(width: 50, height: 50)
                         }
                     )
+                    .allowsHitTesting(model.isVideoRecordingPossible)
 
                     Button(
                         action: { model.triggerAction(.takePhoto) },
@@ -40,6 +41,7 @@ struct MainScreenView: View {
                                 .frame(width: 100, height: 100)
                         }
                     )
+                    .allowsHitTesting(model.isTakingPhotoPossible)
                 }
                 .padding(.bottom, 20)
             }

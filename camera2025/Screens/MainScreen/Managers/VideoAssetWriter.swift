@@ -106,11 +106,13 @@ final class VideoAssetWriter {
         }
     }
 
-    func startWritingIfReady(buffer: CMSampleBuffer) {
-        guard let assetWriter,
-              self.audioInput != nil,
-              self.videoInput != nil,
-              !self.isInputsSetuped else { return }
+    func startWritingIfReady(buffer: CMSampleBuffer) -> Bool {
+        guard
+            let assetWriter,
+            self.audioInput != nil,
+            self.videoInput != nil,
+            !self.isInputsSetuped
+        else { return false }
 
         self.isInputsSetuped = true
 
@@ -124,11 +126,14 @@ final class VideoAssetWriter {
             assetWriter.startWriting()
             assetWriter.startSession(atSourceTime: startTimeToUse)
 
+            return true
+
         case .failed:
             print("assetWriter status: failed error: \(String(describing: assetWriter.error))")
+            return false
 
         default:
-            break
+            return false
         }
     }
 

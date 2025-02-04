@@ -37,11 +37,16 @@ final class MainScreenPresenter: NSObject {
     private func handleAction(_ action: Action) {
         switch action {
         case.takePhoto:
-            try? mainMediaManager.takePhoto()
+            Task { @MainActor in
+                model.isTakingPhotoPossible = false
+                try? await mainMediaManager.takePhoto()
+            }
 
         case .startVideoRecording:
             Task { @MainActor in
                 model.isVideoRecordingActive = true
+                model.isVideoRecordingPossible = false
+                
                 do {
                     try await mainMediaManager.startVideoRecording()
                 } catch {
@@ -51,12 +56,14 @@ final class MainScreenPresenter: NSObject {
 
         case .stopVideoRecording:
             Task { @MainActor in
-                model.isVideoRecordingActive = false
                 do {
                     try await mainMediaManager.stopVideoRecording()
                 } catch {
                     print(1)
                 }
+
+                model.isVideoRecordingActive = false
+                model.isVideoRecordingPossible = true
             }
         }
     }
@@ -68,8 +75,9 @@ extension MainScreenPresenter: PhotoCaptureDelegate {
     }
     
     func photoDataCreated(data: Data) {
-        Task {
+        Task { @MainActor in
             try? await mainMediaManager.savePhotoInGallery(data)
+            model.isTakingPhotoPossible = false
         }
     }
     
