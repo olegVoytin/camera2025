@@ -54,8 +54,9 @@ final class MainMediaManager {
         try await photoTakingManager.savePhotoInGallery(imageData)
     }
 
-    func startVideoRecording() {
+    func startVideoRecording() async throws {
         audioSessionManager.startRunning()
+        try await videoRecordingManager.startVideoRecord()
     }
 }
 

@@ -18,9 +18,19 @@ final class VideoRecordingManager: NSObject {
     private var captureState: CaptureState = .idle
     private var assetWriter: VideoAssetWriter?
     private var captureResolution: CGSize?
+
     private var previousVideoOrientation = AVCaptureVideoOrientation.portrait
 
     @MainMediaActor override init() {}
+
+    func startVideoRecord() throws {
+        let fileName = UUID().uuidString
+        let assetWriter = VideoAssetWriter(fileName: fileName)
+        try assetWriter.setupWriter()
+        self.assetWriter = assetWriter
+
+        captureState = .start
+    }
 }
 
 extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {

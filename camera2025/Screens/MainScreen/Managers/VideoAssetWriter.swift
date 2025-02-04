@@ -34,6 +34,7 @@ final class VideoAssetWriter {
 
     func setupWriter() throws {
         guard self.assetWriter == nil else { return }
+        
         //создаем директорию для видео
         if FileManager.default.fileExists(atPath: self.videoDirectoryPath) {
             try FileManager.default.removeItem(atPath: self.videoDirectoryPath)

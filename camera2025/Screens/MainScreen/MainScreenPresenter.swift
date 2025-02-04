@@ -40,7 +40,9 @@ final class MainScreenPresenter: NSObject {
             try? mainMediaManager.takePhoto()
 
         case .startVideoRecording:
-            break
+            Task {
+                try await mainMediaManager.startVideoRecording()
+            }
         }
     }
 }
