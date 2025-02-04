@@ -23,6 +23,7 @@ struct MainScreenView: View {
                 HStack(spacing: 30) {
                     VideoButton(model: model)
                     PhotoButton(model: model)
+                    ChangeCameraButton(model: model)
                 }
                 .padding(.bottom, 20)
             }
@@ -106,5 +107,42 @@ private struct VideoButton: View {
         )
         .animation(.spring, value: model.isVideoRecordingActive)
         .allowsHitTesting(model.isVideoRecordingStateChangePossible)
+    }
+}
+
+private struct ChangeCameraButton: View {
+
+    let model: MainScreenModel
+    @State private var isPressed: Bool = false
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.white, lineWidth: 4)
+                .frame(width: 60, height: 60)
+
+            ZStack {
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 50, height: 50)
+
+                Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90.camera.fill")
+                    .frame(width: 50, height: 50)
+            }
+            .scaleEffect(isPressed ? 0.9 : 1.0)
+            .animation(.interactiveSpring, value: isPressed)
+        }
+        .onLongPressGesture(
+            minimumDuration: 0,
+            pressing: { pressed in
+                if !pressed {
+                    model.triggerAction(.changeCameraPosition)
+                }
+
+                isPressed = pressed
+            },
+            perform: {}
+        )
+        .allowsHitTesting(model.isTakingPhotoPossible)
     }
 }

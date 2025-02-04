@@ -69,6 +69,9 @@ final class MainScreenPresenter: NSObject {
                 model.isVideoRecordingActive = false
                 model.isVideoRecordingStateChangePossible = true
             }
+
+        case .changeCameraPosition:
+            break
         }
     }
 }

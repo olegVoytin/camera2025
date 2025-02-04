@@ -26,4 +26,5 @@ enum Action {
     case takePhoto
     case startVideoRecording
     case stopVideoRecording
+    case changeCameraPosition
 }
