@@ -1,14 +1,15 @@
 //
-//  AssetWriter.swift
+//  VideoAssetWriter.swift
 //  camera2025
 //
 //  Created by Олег Войтин on 02.02.2025.
 //
 
 @preconcurrency import AVFoundation
+import UIKit
 
 @VideoRecordingActor
-final class AssetWriter {
+final class VideoAssetWriter {
     
     private var assetWriter: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?
@@ -103,41 +104,13 @@ final class AssetWriter {
     }
 
     //начать запись
-    func startWriting(
-        buffer: CMSampleBuffer,
-        isVideoRecordStartedFromFrontCamera: Bool,
-        previousVideoOrientation: AVCaptureVideoOrientation
-    ) async {
+    func startWriting(buffer: CMSampleBuffer) {
         guard let assetWriter,
               self.audioInput != nil,
               self.videoInput != nil,
               !self.isInputsSetuped else { return }
 
         self.isInputsSetuped = true
-
-//        DispatchQueue.main.sync {
-//            let orientation = UIDevice.current.orientation
-//
-//            if isVideoRecordStartedFromFrontCamera && previousVideoOrientation == .portrait {
-//                if orientation == .landscapeLeft,
-//                   let transform = self.videoInput?.transform.rotated(by: .pi / 2) {
-//                    self.videoInput?.transform = transform
-//                } else
-//                if orientation == .landscapeRight,
-//                   let transform = self.videoInput?.transform.rotated(by: .pi / -2) {
-//                    self.videoInput?.transform = transform
-//                }
-//            } else {
-//                if orientation == .landscapeLeft,
-//                   let transform = self.videoInput?.transform.rotated(by: .pi / -2) {
-//                    self.videoInput?.transform = transform
-//                } else
-//                if orientation == .landscapeRight,
-//                   let transform = self.videoInput?.transform.rotated(by: .pi / 2) {
-//                    self.videoInput?.transform = transform
-//                }
-//            }
-//        }
 
         if assetWriter.status == .unknown {
             print("Start writing")
@@ -149,10 +122,34 @@ final class AssetWriter {
             assetWriter.startSession(atSourceTime: startTimeToUse)
         }
 
-        if self.assetWriter?.status == .failed {
-            print("assetWriter status: failed error: \(String(describing: self.assetWriter?.error))")
+        if assetWriter.status == .failed {
+            print("assetWriter status: failed error: \(String(describing: assetWriter.error))")
             return
         }
+    }
+
+    func rotateVideoRelatedOrientation(
+        isVideoRecordStartedFromFrontCamera: Bool,
+        previousVideoOrientation: AVCaptureVideoOrientation,
+        currentOrientation: UIDeviceOrientation
+    ) {
+        guard let transform = self.videoInput?.transform else { return }
+
+        let isFrontPortrait = isVideoRecordStartedFromFrontCamera && previousVideoOrientation == .portrait
+
+        let angle: CGFloat
+        switch (isFrontPortrait, currentOrientation) {
+        case (true, .landscapeLeft), (false, .landscapeRight):
+            angle = .pi / 2
+
+        case (true, .landscapeRight), (false, .landscapeLeft):
+            angle = -.pi / 2
+
+        default:
+            return
+        }
+
+        self.videoInput?.transform = transform.rotated(by: angle)
     }
 
     //записать видео

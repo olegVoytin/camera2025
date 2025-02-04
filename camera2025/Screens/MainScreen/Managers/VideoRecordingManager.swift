@@ -6,6 +6,7 @@
 //
 
 @preconcurrency import AVFoundation
+import UIKit
 
 @VideoRecordingActor
 final class VideoRecordingManager: NSObject {
@@ -15,13 +16,15 @@ final class VideoRecordingManager: NSObject {
     }
 
     private var captureState: CaptureState = .idle
-    private var assetWriter: AssetWriter?
+    private var assetWriter: VideoAssetWriter?
     private var captureResolution: CGSize?
+    private var previousVideoOrientation = AVCaptureVideoOrientation.portrait
 
     @MainMediaActor override init() {}
 }
 
 extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
+
     nonisolated func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
@@ -34,7 +37,7 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             case .start:
                 setupVideoOutput(sampleBuffer: sampleBuffer)
                 setupAudioOutput(sampleBuffer: sampleBuffer)
-                await doStartRecording(sampleBuffer: sampleBuffer)
+                await startRecording(sampleBuffer: sampleBuffer)
 
                 //запись видео
             case .capturing:
@@ -50,43 +53,50 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
     //установка видео
     private func setupVideoOutput(sampleBuffer: CMSampleBuffer) {
         guard
+            let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video,
             let captureResolution
         else { return }
-        self.assetWriter?.setupVideoInput(resolution: captureResolution)
+        assetWriter.setupVideoInput(resolution: captureResolution)
     }
 
     //установка аудио
     private func setupAudioOutput(sampleBuffer: CMSampleBuffer) {
         guard
+            let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             let stream = CMAudioFormatDescriptionGetStreamBasicDescription(format)
         else { return }
-        self.assetWriter?.setupAudioInput(stream: stream)
+        assetWriter.setupAudioInput(stream: stream)
     }
 
     //начать запись видео
-    private func doStartRecording(sampleBuffer: CMSampleBuffer) async {
+    private func startRecording(sampleBuffer: CMSampleBuffer) async {
         guard
+            let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video
         else { return }
-        await self.assetWriter?.startWriting(
-            buffer: sampleBuffer,
+
+        let currentOrientation = await getDeviceOrientation()
+        assetWriter.rotateVideoRelatedOrientation(
             isVideoRecordStartedFromFrontCamera: true,
-            previousVideoOrientation: .portrait
+            previousVideoOrientation: previousVideoOrientation,
+            currentOrientation: currentOrientation
         )
+        assetWriter.startWriting(buffer: sampleBuffer)
+
         captureState = .capturing
     }
 
     //захват видео буфера
     private func captureVideoBuffer(sampleBuffer: CMSampleBuffer) {
         guard
+            let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video,
-            captureState == .capturing,
-            let assetWriter
+            captureState == .capturing
         else { return }
         assetWriter.writeVideo(
             buffer: sampleBuffer,
@@ -97,10 +107,10 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
     //захват аудио буффера
     private func captureAudioBuffer(sampleBuffer: CMSampleBuffer) {
         guard
+            let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Audio,
-            captureState == .capturing,
-            let assetWriter
+            captureState == .capturing
         else { return }
         assetWriter.writeAudio(buffer: sampleBuffer)
     }
@@ -108,5 +118,10 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
     //обработка успешно снятого видео
     private func handleSuccessRecording(outputFileURL: URL?) {
         self.assetWriter = nil
+    }
+
+    @MainActor
+    private func getDeviceOrientation() -> UIDeviceOrientation {
+        UIDevice.current.orientation
     }
 }
