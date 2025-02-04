@@ -45,17 +45,21 @@ final class MainScreenPresenter: NSObject {
         case .startVideoRecording:
             Task { @MainActor in
                 model.isVideoRecordingActive = true
-                model.isVideoRecordingPossible = false
+                model.isVideoRecordingStateChangePossible = false
                 
                 do {
                     try await mainMediaManager.startVideoRecording()
                 } catch {
                     print(1)
                 }
+
+                model.isVideoRecordingStateChangePossible = true
             }
 
         case .stopVideoRecording:
             Task { @MainActor in
+                model.isVideoRecordingStateChangePossible = false
+                
                 do {
                     try await mainMediaManager.stopVideoRecording()
                 } catch {
@@ -63,7 +67,7 @@ final class MainScreenPresenter: NSObject {
                 }
 
                 model.isVideoRecordingActive = false
-                model.isVideoRecordingPossible = true
+                model.isVideoRecordingStateChangePossible = true
             }
         }
     }
@@ -78,7 +82,7 @@ extension MainScreenPresenter: PhotoCaptureDelegate {
     func photoDataCreated(data: Data) {
         Task { @MainActor in
             try? await mainMediaManager.savePhotoInGallery(data)
-            model.isTakingPhotoPossible = false
+            model.isTakingPhotoPossible = true
         }
     }
     

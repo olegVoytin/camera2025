@@ -21,19 +21,7 @@ struct MainScreenView: View {
                 Spacer()
 
                 HStack(spacing: 30) {
-                    Button(
-                        action: {
-                            model.triggerAction(
-                                model.isVideoRecordingActive ? .stopVideoRecording : .startVideoRecording
-                            )
-                        },
-                        label: {
-                            Color.red
-                                .frame(width: 50, height: 50)
-                        }
-                    )
-                    .allowsHitTesting(model.isVideoRecordingPossible)
-
+                    VideoButton(model: model)
                     PhotoButton(model: model)
                 }
                 .padding(.bottom, 20)
@@ -53,19 +41,70 @@ private struct PhotoButton: View {
                 .stroke(Color.white, lineWidth: 4)
                 .frame(width: 80, height: 80)
 
-            Circle()
-                .fill(Color.white)
-                .frame(width: 70, height: 70)
-                .scaleEffect(isPressed ? 0.9 : 1.0)
-                .animation(.interactiveSpring, value: isPressed)
+            ZStack {
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 70, height: 70)
+                    .scaleEffect(isPressed ? 0.9 : 1.0)
+                    .animation(.interactiveSpring, value: isPressed)
+
+                if !model.isTakingPhotoPossible {
+                    ProgressView()
+                }
+            }
         }
         .onLongPressGesture(
             minimumDuration: 0,
             pressing: { pressed in
+                if !pressed {
+                    model.triggerAction(.takePhoto)
+                }
+
                 isPressed = pressed
             },
             perform: {}
         )
         .allowsHitTesting(model.isTakingPhotoPossible)
+    }
+}
+
+private struct VideoButton: View {
+
+    let model: MainScreenModel
+
+    @State private var isPressed: Bool = false
+
+    private var outerSize: CGFloat { model.isVideoRecordingActive ? 80 : 60 }
+    private var innerSize: CGFloat { model.isVideoRecordingActive ? 40 : 30 }
+    private var innerCornerRadius: CGFloat { model.isVideoRecordingActive ? 10 : innerSize / 2 }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.white, lineWidth: 4)
+                .frame(width: outerSize, height: outerSize)
+                .scaleEffect(isPressed ? 1.1 : 1.0)
+                .animation(.interactiveSpring, value: isPressed)
+
+            RoundedRectangle(cornerRadius: innerCornerRadius)
+                .fill(Color.red)
+                .frame(width: innerSize, height: innerSize)
+                .animation(.spring, value: model.isVideoRecordingActive)
+        }
+        .onLongPressGesture(
+            minimumDuration: 0,
+            pressing: { pressed in
+                if !pressed {
+                    model.triggerAction(
+                        model.isVideoRecordingActive ? .stopVideoRecording : .startVideoRecording
+                    )
+                }
+
+                isPressed = pressed
+            },
+            perform: {}
+        )
+        .animation(.spring, value: model.isVideoRecordingActive)
+        .allowsHitTesting(model.isVideoRecordingStateChangePossible)
     }
 }

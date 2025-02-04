@@ -13,7 +13,7 @@ final class MainScreenModel {
     var isTakingPhotoPossible: Bool = true
 
     var isVideoRecordingActive: Bool = false
-    var isVideoRecordingPossible: Bool = true
+    var isVideoRecordingStateChangePossible: Bool = true
 
     let triggerAction: (Action) -> Void
 
