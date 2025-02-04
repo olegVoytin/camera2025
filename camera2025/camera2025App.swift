@@ -20,10 +20,9 @@ final class AppManager: ObservableObject {
             let mainScreenPresenter = await MainScreenPresenter(mainMediaManager: mainMediaManager)
             await mainScreenPresenter.startSession()
 
-            self.mainScreenData = await (
-                mainScreenPresenter.actionHandler,
-                mainScreenPresenter.videoCaptureSession
-            )
+            let model = mainScreenPresenter.model
+            let videoCaptureSession = await mainScreenPresenter.videoCaptureSession
+            self.mainScreenData = (model, videoCaptureSession)
             presentMainScreen = true
         } catch {
             fatalError()
@@ -46,7 +45,7 @@ struct camera2025App: App {
                     if let mainScreenData = appManager.mainScreenData {
                         MainScreenView(
                             videoCaptureSession: mainScreenData.1,
-                            actionHandler: mainScreenData.0
+                            model: mainScreenData.0
                         )
                     }
                 }

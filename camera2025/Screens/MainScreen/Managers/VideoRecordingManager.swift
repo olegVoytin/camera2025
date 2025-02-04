@@ -18,15 +18,14 @@ final class VideoRecordingManager: NSObject {
 
     private var recordingState: RecordingState = .idle
     private var assetWriter: VideoAssetWriter?
-    private var captureResolution: CGSize?
 
     private var previousVideoOrientation = AVCaptureVideoOrientation.portrait
 
     @MainMediaActor override init() {}
 
-    func startVideoRecording() throws {
+    func startVideoRecording(captureResolution: CGSize) throws {
         let fileName = UUID().uuidString
-        let assetWriter = VideoAssetWriter(fileName: fileName)
+        let assetWriter = VideoAssetWriter(fileName: fileName, captureResolution: captureResolution)
         try assetWriter.setupWriter()
         self.assetWriter = assetWriter
 
@@ -99,10 +98,9 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
         guard
             let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
-            CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video,
-            let captureResolution
+            CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video
         else { return }
-        assetWriter.setupVideoInput(resolution: captureResolution)
+        assetWriter.setupVideoInput()
     }
 
     //установка аудио

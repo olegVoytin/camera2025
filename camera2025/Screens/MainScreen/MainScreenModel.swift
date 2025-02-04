@@ -5,8 +5,13 @@
 //  Created by Олег Войтин on 02.02.2025.
 //
 
-struct MainScreenModel: Sendable {
-    let triggerAction: @Sendable (Action) -> Void
+final class MainScreenModel {
+    var isVideoRecordingActive: Bool = false
+    let triggerAction: (Action) -> Void
+
+    internal init(triggerAction: @escaping (Action) -> Void) {
+        self.triggerAction = triggerAction
+    }
 }
 
 enum Action {

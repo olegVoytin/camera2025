@@ -15,6 +15,7 @@ final class VideoAssetWriter {
     private var videoInput: AVAssetWriterInput?
     private var audioInput: AVAssetWriterInput?
     private var assetWriterInputPixelBufferAdator: AVAssetWriterInputPixelBufferAdaptor?
+    private let captureResolution: CGSize
 
     private let fileName: String
     var recordedVideoFileURL: URL?
@@ -22,8 +23,9 @@ final class VideoAssetWriter {
     private var isFirstVideoFrameRecieved = false
     private var isInputsSetuped = false
 
-    init(fileName: String) {
+    init(fileName: String, captureResolution: CGSize) {
         self.fileName = fileName
+        self.captureResolution = captureResolution
     }
 
     private var videoDirectoryPath: String {
@@ -57,14 +59,14 @@ final class VideoAssetWriter {
     }
 
     //установка видео инпута
-    func setupVideoInput(resolution: CGSize) {
+    func setupVideoInput() {
         guard let assetWriter,
                 self.videoInput == nil else { return }
 
         let writerOutputSettings = [
             AVVideoCodecKey: AVVideoCodecType.h264,
-            AVVideoWidthKey: resolution.height,
-            AVVideoHeightKey: resolution.width
+            AVVideoWidthKey: captureResolution.height,
+            AVVideoHeightKey: captureResolution.width
         ] as [String: Any]
 
         self.videoInput = AVAssetWriterInput(

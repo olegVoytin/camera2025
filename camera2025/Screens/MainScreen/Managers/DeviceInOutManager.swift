@@ -47,4 +47,10 @@ final class DeviceInOutManager {
         videoOutput.setSampleBufferDelegate(videoBufferDelegate, queue: bufferQueue)
         audioOutput.setSampleBufferDelegate(audioBufferDelegate, queue: bufferQueue)
     }
+
+    func getCameraResolution() -> CGSize {
+        let formatDescription = videoDeviceInput.device.activeFormat.formatDescription
+        let dimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
+        return CGSize(width: CGFloat(dimensions.width), height: CGFloat(dimensions.height))
+    }
 }

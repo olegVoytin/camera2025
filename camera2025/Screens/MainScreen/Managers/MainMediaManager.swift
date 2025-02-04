@@ -56,7 +56,9 @@ final class MainMediaManager {
 
     func startVideoRecording() async throws {
         audioSessionManager.startRunning()
-        try await videoRecordingManager.startVideoRecording()
+
+        let cameraResolution = deviceInOutManager.getCameraResolution()
+        try await videoRecordingManager.startVideoRecording(captureResolution: cameraResolution)
     }
 
     func stopVideoRecording() async throws {
