@@ -94,8 +94,8 @@
             filePath = "camera2025/Screens/MainScreen/Managers/VideoAssetWriter.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "190"
-            endingLineNumber = "190"
+            startingLineNumber = "188"
+            endingLineNumber = "188"
             landmarkName = "finishWriting()"
             landmarkType = "7">
          </BreakpointContent>
@@ -126,9 +126,9 @@
             filePath = "camera2025/Screens/MainScreen/Managers/VideoRecordingManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "118"
-            endingLineNumber = "118"
-            landmarkName = "startRecording(sampleBuffer:)"
+            startingLineNumber = "115"
+            endingLineNumber = "115"
+            landmarkName = "startRecordingIfReady(sampleBuffer:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -142,9 +142,9 @@
             filePath = "camera2025/Screens/MainScreen/Managers/VideoRecordingManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "124"
-            endingLineNumber = "124"
-            landmarkName = "startRecording(sampleBuffer:)"
+            startingLineNumber = "121"
+            endingLineNumber = "121"
+            landmarkName = "startRecordingIfReady(sampleBuffer:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -158,25 +158,9 @@
             filePath = "camera2025/Screens/MainScreen/Managers/VideoRecordingManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "132"
-            endingLineNumber = "132"
-            landmarkName = "startRecording(sampleBuffer:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "FB341DE3-48C6-4D68-BC6C-CFD3C926D88F"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "camera2025/Screens/MainScreen/Managers/VideoAssetWriter.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "121"
-            endingLineNumber = "121"
-            landmarkName = "startWriting(buffer:)"
+            startingLineNumber = "129"
+            endingLineNumber = "129"
+            landmarkName = "startRecordingIfReady(sampleBuffer:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -190,9 +174,9 @@
             filePath = "camera2025/Screens/MainScreen/Managers/VideoAssetWriter.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "114"
-            endingLineNumber = "114"
-            landmarkName = "startWriting(buffer:)"
+            startingLineNumber = "110"
+            endingLineNumber = "110"
+            landmarkName = "startWritingIfReady(buffer:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -206,9 +190,9 @@
             filePath = "camera2025/Screens/MainScreen/Managers/VideoAssetWriter.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "63"
-            endingLineNumber = "63"
-            landmarkName = "setupVideoInput(resolution:)"
+            startingLineNumber = "61"
+            endingLineNumber = "61"
+            landmarkName = "setupVideoInputIfNeeded()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -222,9 +206,9 @@
             filePath = "camera2025/Screens/MainScreen/Managers/VideoRecordingManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "98"
-            endingLineNumber = "98"
-            landmarkName = "setupVideoOutput(sampleBuffer:)"
+            startingLineNumber = "97"
+            endingLineNumber = "97"
+            landmarkName = "setupVideoInputIfNeeded(sampleBuffer:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

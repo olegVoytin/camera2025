@@ -33,14 +33,14 @@ final class VideoAssetWriter {
         return dir + "/Videos"
     }
 
-    private var filePath: String {
-        return videoDirectoryPath + "/\(fileName)"
+    private var filePathURL: URL {
+        let filePath = videoDirectoryPath + "/\(fileName)"
+        return URL(fileURLWithPath: filePath).appendingPathExtension("mov")
     }
 
     func setupWriter() throws {
         guard self.assetWriter == nil else { return }
-        
-        //создаем директорию для видео
+
         if FileManager.default.fileExists(atPath: self.videoDirectoryPath) {
             try FileManager.default.removeItem(atPath: self.videoDirectoryPath)
         }
@@ -51,15 +51,13 @@ final class VideoAssetWriter {
             attributes: nil
         )
 
-        //инициализируем райтер
         self.assetWriter = try AVAssetWriter(
-            outputURL: URL(fileURLWithPath: self.filePath).appendingPathExtension("mov"),
+            outputURL: filePathURL,
             fileType: AVFileType.mov
         )
     }
 
-    //установка видео инпута
-    func setupVideoInput() {
+    func setupVideoInputIfNeeded() {
         guard let assetWriter,
                 self.videoInput == nil else { return }
 
@@ -86,8 +84,7 @@ final class VideoAssetWriter {
         }
     }
 
-    //установка аудио инпута
-    func setupAudioInput(stream: UnsafePointer<AudioStreamBasicDescription>) {
+    func setupAudioInputIfNeeded(stream: UnsafePointer<AudioStreamBasicDescription>) {
         guard let assetWriter,
                 self.audioInput == nil else { return }
         let audioOutputSettings = [
@@ -109,8 +106,7 @@ final class VideoAssetWriter {
         }
     }
 
-    //начать запись
-    func startWriting(buffer: CMSampleBuffer) {
+    func startWritingIfReady(buffer: CMSampleBuffer) {
         guard let assetWriter,
               self.audioInput != nil,
               self.videoInput != nil,
@@ -118,7 +114,8 @@ final class VideoAssetWriter {
 
         self.isInputsSetuped = true
 
-        if assetWriter.status == .unknown {
+        switch assetWriter.status {
+        case .unknown:
             print("Start writing")
             let startTime = CMSampleBufferGetPresentationTimeStamp(buffer)
             let startingTimeDelay = CMTimeMakeWithSeconds(0.7, preferredTimescale: 1_000_000_000)
@@ -126,11 +123,12 @@ final class VideoAssetWriter {
 
             assetWriter.startWriting()
             assetWriter.startSession(atSourceTime: startTimeToUse)
-        }
 
-        if assetWriter.status == .failed {
+        case .failed:
             print("assetWriter status: failed error: \(String(describing: assetWriter.error))")
-            return
+
+        default:
+            break
         }
     }
 
@@ -158,31 +156,31 @@ final class VideoAssetWriter {
         self.videoInput?.transform = transform.rotated(by: angle)
     }
 
-    //записать видео
     func writeVideo(buffer: CMSampleBuffer, currentFrameRate: Int) {
-        if let assetWriterInputPixelBufferAdator = self.assetWriterInputPixelBufferAdator,
-           let assetWriterVideoInput = self.videoInput,
-           assetWriterVideoInput.isReadyForMoreMediaData,
-           let pixelBuffer = CMSampleBufferGetImageBuffer(buffer) {
-            let currentPresentationTimestamp = CMSampleBufferGetPresentationTimeStamp(buffer)
-            self.isFirstVideoFrameRecieved = true
-            assetWriterInputPixelBufferAdator.append(
-                pixelBuffer,
-                withPresentationTime: currentPresentationTimestamp
-            )
-        }
+        guard
+            let assetWriterInputPixelBufferAdator = self.assetWriterInputPixelBufferAdator,
+            let assetWriterVideoInput = self.videoInput,
+            assetWriterVideoInput.isReadyForMoreMediaData,
+            let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)
+        else { return }
+
+        let currentPresentationTimestamp = CMSampleBufferGetPresentationTimeStamp(buffer)
+        self.isFirstVideoFrameRecieved = true
+        assetWriterInputPixelBufferAdator.append(
+            pixelBuffer,
+            withPresentationTime: currentPresentationTimestamp
+        )
     }
 
-    //записать аудио
     func writeAudio(buffer: CMSampleBuffer) {
-        if let audioInput,
-           audioInput.isReadyForMoreMediaData,
-           self.isFirstVideoFrameRecieved {
-            audioInput.append(buffer)
-        }
+        guard
+            let audioInput,
+            audioInput.isReadyForMoreMediaData,
+            self.isFirstVideoFrameRecieved
+        else { return }
+        audioInput.append(buffer)
     }
 
-    //остановить запись
     func finishWriting() async throws {
         guard
             let assetWriter,
@@ -191,7 +189,7 @@ final class VideoAssetWriter {
 
         await assetWriter.finishWriting()
 
-        recordedVideoFileURL = URL(fileURLWithPath: self.filePath).appendingPathExtension("mov")
+        recordedVideoFileURL = filePathURL
     }
 }
 

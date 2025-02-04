@@ -78,9 +78,9 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             switch recordingState {
                 //старт записи видео
             case .start:
-                setupVideoOutput(sampleBuffer: sampleBuffer)
-                setupAudioOutput(sampleBuffer: sampleBuffer)
-                await startRecording(sampleBuffer: sampleBuffer)
+                setupVideoInputIfNeeded(sampleBuffer: sampleBuffer)
+                setupAudioInputIfNeeded(sampleBuffer: sampleBuffer)
+                await startRecordingIfReady(sampleBuffer: sampleBuffer)
 
                 //запись видео
             case .recording:
@@ -93,28 +93,25 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
         }
     }
 
-    //установка видео
-    private func setupVideoOutput(sampleBuffer: CMSampleBuffer) {
+    private func setupVideoInputIfNeeded(sampleBuffer: CMSampleBuffer) {
         guard
             let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video
         else { return }
-        assetWriter.setupVideoInput()
+        assetWriter.setupVideoInputIfNeeded()
     }
 
-    //установка аудио
-    private func setupAudioOutput(sampleBuffer: CMSampleBuffer) {
+    private func setupAudioInputIfNeeded(sampleBuffer: CMSampleBuffer) {
         guard
             let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             let stream = CMAudioFormatDescriptionGetStreamBasicDescription(format)
         else { return }
-        assetWriter.setupAudioInput(stream: stream)
+        assetWriter.setupAudioInputIfNeeded(stream: stream)
     }
 
-    //начать запись видео
-    private func startRecording(sampleBuffer: CMSampleBuffer) async {
+    private func startRecordingIfReady(sampleBuffer: CMSampleBuffer) async {
         guard
             let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
@@ -127,12 +124,11 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             previousVideoOrientation: previousVideoOrientation,
             currentOrientation: currentOrientation
         )
-        assetWriter.startWriting(buffer: sampleBuffer)
+        assetWriter.startWritingIfReady(buffer: sampleBuffer)
 
         recordingState = .recording
     }
 
-    //захват видео буфера
     private func captureVideoBuffer(sampleBuffer: CMSampleBuffer) {
         guard
             let assetWriter,
@@ -146,7 +142,6 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
         )
     }
 
-    //захват аудио буффера
     private func captureAudioBuffer(sampleBuffer: CMSampleBuffer) {
         guard
             let assetWriter,
@@ -157,7 +152,6 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
         assetWriter.writeAudio(buffer: sampleBuffer)
     }
 
-    //обработка успешно снятого видео
     private func handleSuccessRecording(outputFileURL: URL?) {
         self.assetWriter = nil
     }
