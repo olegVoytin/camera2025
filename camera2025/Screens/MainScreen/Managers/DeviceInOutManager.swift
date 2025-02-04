@@ -15,6 +15,15 @@ final class DeviceInOutManager {
     var audioDeviceInput: AVCaptureDeviceInput
     let audioOutput = AVCaptureAudioDataOutput()
 
+    private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(
+        deviceTypes: [
+            .builtInWideAngleCamera,
+            .builtInDualCamera,
+            .builtInTrueDepthCamera
+        ],
+        mediaType: .video,
+        position: .unspecified
+    )
     private let bufferQueue = DispatchQueue(label: "com.example.camera2025.bufferQueue")
 
     init() throws {
@@ -52,5 +61,48 @@ final class DeviceInOutManager {
         let formatDescription = videoDeviceInput.device.activeFormat.formatDescription
         let dimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
         return CGSize(width: CGFloat(dimensions.width), height: CGFloat(dimensions.height))
+    }
+
+    func setNewInput() throws -> (oldInput: AVCaptureDeviceInput, newInput: AVCaptureDeviceInput) {
+        let oldInput = videoDeviceInput
+
+        guard let newDevice = getNewDevice() else { throw SessionError.changeCameraPositionError }
+        let newInput = try AVCaptureDeviceInput(device: newDevice)
+        videoDeviceInput = newInput
+
+        return (oldInput: oldInput, newInput: newInput)
+    }
+
+    private func getNewDevice() -> AVCaptureDevice? {
+        let currentPosition = videoDeviceInput.device.position
+
+        let preferredPosition: AVCaptureDevice.Position
+        let preferredDeviceType: AVCaptureDevice.DeviceType
+
+        switch currentPosition {
+        case .unspecified, .front:
+            preferredPosition = .back
+            preferredDeviceType = .builtInDualCamera
+
+        case .back:
+            preferredPosition = .front
+            preferredDeviceType = .builtInTrueDepthCamera
+
+        @unknown default:
+            print("Unknown capture position. Defaulting to back, dual-camera.")
+            preferredPosition = .back
+            preferredDeviceType = .builtInDualCamera
+        }
+
+        let devices = self.videoDeviceDiscoverySession.devices
+
+        if let device = devices
+            .first(where: { $0.position == preferredPosition && $0.deviceType == preferredDeviceType }) {
+            return device
+        } else if let device = devices.first(where: { $0.position == preferredPosition }) {
+            return device
+        } else {
+            return nil
+        }
     }
 }

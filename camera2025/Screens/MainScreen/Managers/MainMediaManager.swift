@@ -12,16 +12,12 @@ final class MainMediaManager {
 
     let videoSession = AVCaptureSession()
 
-    private lazy var videoSessionManager = VideoSessionManager(
-        videoSession: videoSession,
-        videoOutput: deviceInOutManager.videoOutput
-    )
-    private lazy var audioSessionManager = AudioSessionManager(audioOutput: deviceInOutManager.audioOutput)
+    private let deviceInOutManager: DeviceInOutManager
+    private lazy var videoSessionManager = VideoSessionManager(videoSession: videoSession)
+    private let audioSessionManager = AudioSessionManager()
 
     private let photoTakingManager = PhotoTakingManager()
     private let videoRecordingManager = VideoRecordingManager()
-
-    private let deviceInOutManager: DeviceInOutManager
 
     init(deviceInputManager: DeviceInOutManager) throws {
         self.deviceInOutManager = try DeviceInOutManager()
@@ -35,9 +31,13 @@ final class MainMediaManager {
             )
             try videoSessionManager.start(
                 videoDeviceInput: deviceInOutManager.videoDeviceInput,
+                videoOutput: deviceInOutManager.videoOutput,
                 photoOutput: photoTakingManager.photoOutput
             )
-            try audioSessionManager.start(audioInput: deviceInOutManager.audioDeviceInput)
+            try audioSessionManager.start(
+                audioInput: deviceInOutManager.audioDeviceInput,
+                audioOutput: deviceInOutManager.audioOutput
+            )
         } catch {
             guard let error = error as? SessionError else { return }
             print(error.localizedDescription)
@@ -65,6 +65,11 @@ final class MainMediaManager {
         audioSessionManager.stopRunning()
         try await videoRecordingManager.stopVideoRecording()
     }
+
+    func changeCameraPosition() throws {
+        let (oldInput, newInput) = try deviceInOutManager.setNewInput()
+        videoSessionManager.setNewDeviceToSession(oldInput: oldInput, newInput: newInput)
+    }
 }
 
 enum SessionError: Error {
@@ -76,6 +81,7 @@ enum SessionError: Error {
     case makePhotoError
     case savePhotoToLibraryError
     case saveVideoToLibraryError
+    case changeCameraPositionError
 
     var localizedDescription: String {
         switch self {
@@ -102,6 +108,9 @@ enum SessionError: Error {
 
         case .saveVideoToLibraryError:
             return "Could not save video to library."
+
+        case .changeCameraPositionError:
+            return "Could not change camera position."
         }
     }
 }

@@ -11,13 +11,8 @@ import AVFoundation
 final class AudioSessionManager {
 
     private let audioSession = AVCaptureSession()
-    private let audioOutput: AVCaptureAudioDataOutput
 
-    init(audioOutput: AVCaptureAudioDataOutput) {
-        self.audioOutput = audioOutput
-    }
-
-    func start(audioInput: AVCaptureDeviceInput) throws {
+    func start(audioInput: AVCaptureDeviceInput, audioOutput: AVCaptureAudioDataOutput) throws {
         audioSession.beginConfiguration()
 
         guard audioSession.canAddInput(audioInput),

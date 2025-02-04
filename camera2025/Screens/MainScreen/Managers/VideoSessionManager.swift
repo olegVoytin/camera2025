@@ -11,15 +11,14 @@ import AVFoundation
 final class VideoSessionManager {
 
     private let videoSession: AVCaptureSession
-    private let videoOutput: AVCaptureVideoDataOutput
 
-    init(videoSession: AVCaptureSession, videoOutput: AVCaptureVideoDataOutput) {
+    init(videoSession: AVCaptureSession) {
         self.videoSession = videoSession
-        self.videoOutput = videoOutput
     }
 
     func start(
         videoDeviceInput: AVCaptureDeviceInput,
+        videoOutput: AVCaptureVideoDataOutput,
         photoOutput: AVCapturePhotoOutput
     ) throws {
         videoSession.beginConfiguration()
@@ -28,7 +27,7 @@ final class VideoSessionManager {
 
         do {
             try addVideoInput(videoDeviceInput: videoDeviceInput)
-            try addVideoOutput()
+            try addVideoOutput(videoOutput: videoOutput)
             try addPhotoOutput(photoOutput: photoOutput)
         } catch {
             videoSession.commitConfiguration()
@@ -40,6 +39,18 @@ final class VideoSessionManager {
         videoSession.startRunning()
     }
 
+    func setNewDeviceToSession(oldInput: AVCaptureDeviceInput, newInput: AVCaptureDeviceInput) {
+        videoSession.beginConfiguration()
+
+        videoSession.removeInput(oldInput)
+
+        if videoSession.canAddInput(newInput) {
+            videoSession.addInput(newInput)
+        }
+
+        videoSession.commitConfiguration()
+    }
+
     private func addVideoInput(videoDeviceInput: AVCaptureDeviceInput) throws {
         guard videoSession.canAddInput(videoDeviceInput) else {
             throw SessionError.addVideoInputError
@@ -47,7 +58,7 @@ final class VideoSessionManager {
         videoSession.addInput(videoDeviceInput)
     }
 
-    private func addVideoOutput() throws {
+    private func addVideoOutput(videoOutput: AVCaptureVideoDataOutput) throws {
         guard videoSession.canAddOutput(videoOutput) else { throw SessionError.addVideoOutputError }
 
         videoSession.beginConfiguration()
