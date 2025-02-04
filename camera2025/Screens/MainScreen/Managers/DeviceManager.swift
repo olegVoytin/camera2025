@@ -1,5 +1,5 @@
 //
-//  DeviceInOutManager.swift
+//  DeviceManager.swift
 //  camera2025
 //
 //  Created by Олег Войтин on 02.02.2025.
@@ -8,7 +8,7 @@
 import AVFoundation
 
 @MainMediaActor
-final class DeviceInOutManager {
+final class DeviceManager {
     var videoDeviceInput: AVCaptureDeviceInput
     let videoOutput = AVCaptureVideoDataOutput()
 

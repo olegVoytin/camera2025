@@ -12,31 +12,31 @@ final class MainMediaManager {
 
     let videoSession = AVCaptureSession()
 
-    private let deviceInOutManager: DeviceInOutManager
+    private let deviceManager: DeviceManager
     private lazy var videoSessionManager = VideoSessionManager(videoSession: videoSession)
     private let audioSessionManager = AudioSessionManager()
 
     private let photoTakingManager = PhotoTakingManager()
     private let videoRecordingManager = VideoRecordingManager()
 
-    init(deviceInputManager: DeviceInOutManager) throws {
-        self.deviceInOutManager = try DeviceInOutManager()
+    init(deviceManager: DeviceManager) throws {
+        self.deviceManager = try DeviceManager()
     }
 
     func startCapture(photoNotificationsObserver: PhotoCaptureObserver) {
         do {
-            try deviceInOutManager.start(
+            try deviceManager.start(
                 videoBufferDelegate: videoRecordingManager,
                 audioBufferDelegate: videoRecordingManager
             )
             try videoSessionManager.start(
-                videoDeviceInput: deviceInOutManager.videoDeviceInput,
-                videoOutput: deviceInOutManager.videoOutput,
+                videoDeviceInput: deviceManager.videoDeviceInput,
+                videoOutput: deviceManager.videoOutput,
                 photoOutput: photoTakingManager.photoOutput
             )
             try audioSessionManager.start(
-                audioInput: deviceInOutManager.audioDeviceInput,
-                audioOutput: deviceInOutManager.audioOutput
+                audioInput: deviceManager.audioDeviceInput,
+                audioOutput: deviceManager.audioOutput
             )
         } catch {
             guard let error = error as? SessionError else { return }
@@ -57,7 +57,7 @@ final class MainMediaManager {
     func startVideoRecording() async throws {
         audioSessionManager.startRunning()
 
-        let cameraResolution = deviceInOutManager.getCameraResolution()
+        let cameraResolution = deviceManager.getCameraResolution()
         try await videoRecordingManager.startVideoRecording(captureResolution: cameraResolution)
     }
 
@@ -67,7 +67,7 @@ final class MainMediaManager {
     }
 
     func changeCameraPosition() throws {
-        let (oldInput, newInput) = try deviceInOutManager.setNewInput()
+        let (oldInput, newInput) = try deviceManager.setNewInput()
         videoSessionManager.setNewDeviceToSession(oldInput: oldInput, newInput: newInput)
     }
 }
