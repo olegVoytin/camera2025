@@ -11,7 +11,7 @@ import SwiftUI
 @MainActor
 final class AppManager: ObservableObject {
 
-    var mainScreenData: (MainScreenActionHandler, AVCaptureSession)?
+    var mainScreenData: (MainScreenModel, AVCaptureSession)?
     @Published var presentMainScreen: Bool = false
 
     func startCameraPreview() async {

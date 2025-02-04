@@ -15,7 +15,10 @@ final class VideoAssetWriter {
     private var videoInput: AVAssetWriterInput?
     private var audioInput: AVAssetWriterInput?
     private var assetWriterInputPixelBufferAdator: AVAssetWriterInputPixelBufferAdaptor?
+
     private let fileName: String
+    var recordedVideoFileURL: URL?
+
     private var isFirstVideoFrameRecieved = false
     private var isInputsSetuped = false
 
@@ -178,9 +181,18 @@ final class VideoAssetWriter {
     }
 
     //остановить запись
-    func finishWriting() async -> URL? {
-        guard let assetWriter, assetWriter.status == .writing else { return nil }
+    func finishWriting() async throws {
+        guard
+            let assetWriter,
+            assetWriter.status == .writing
+        else { throw AssetWriterError.failedToCreateFileURL }
+
         await assetWriter.finishWriting()
-        return URL(fileURLWithPath: self.filePath).appendingPathExtension("mov")
+
+        recordedVideoFileURL = URL(fileURLWithPath: self.filePath).appendingPathExtension("mov")
     }
+}
+
+enum AssetWriterError: Error {
+    case failedToCreateFileURL
 }

@@ -14,7 +14,7 @@ final class MainScreenPresenter: NSObject {
         mainMediaManager.videoSession
     }
 
-    lazy var actionHandler = MainScreenActionHandler(triggerAction: { action in
+    lazy var actionHandler = MainScreenModel(triggerAction: { action in
         Task { @MainMediaActor in
             self.handleAction(action)
         }
@@ -42,6 +42,11 @@ final class MainScreenPresenter: NSObject {
         case .startVideoRecording:
             Task {
                 try await mainMediaManager.startVideoRecording()
+            }
+
+        case .stopVideoRecording:
+            Task {
+                try await mainMediaManager.stopVideoRecording()
             }
         }
     }

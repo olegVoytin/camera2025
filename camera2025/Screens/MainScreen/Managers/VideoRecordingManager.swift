@@ -7,15 +7,16 @@
 
 @preconcurrency import AVFoundation
 import UIKit
+import Photos
 
 @VideoRecordingActor
 final class VideoRecordingManager: NSObject {
 
-    private enum CaptureState {
-        case idle, start, capturing
+    private enum RecordingState {
+        case idle, start, recording
     }
 
-    private var captureState: CaptureState = .idle
+    private var recordingState: RecordingState = .idle
     private var assetWriter: VideoAssetWriter?
     private var captureResolution: CGSize?
 
@@ -23,13 +24,46 @@ final class VideoRecordingManager: NSObject {
 
     @MainMediaActor override init() {}
 
-    func startVideoRecord() throws {
+    func startVideoRecording() throws {
         let fileName = UUID().uuidString
         let assetWriter = VideoAssetWriter(fileName: fileName)
         try assetWriter.setupWriter()
         self.assetWriter = assetWriter
 
-        captureState = .start
+        recordingState = .start
+    }
+
+    func stopVideoRecording() async throws {
+        guard let assetWriter,
+              recordingState == .recording else { return }
+
+        recordingState = .idle
+
+        try await assetWriter.finishWriting()
+
+        if let recordedVideoFileURL = assetWriter.recordedVideoFileURL {
+            try await saveVideoInGallery(url: recordedVideoFileURL)
+        }
+
+        self.assetWriter = nil
+    }
+
+    nonisolated private func saveVideoInGallery(url: URL) async throws {
+        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        switch status {
+        case .authorized, .limited:
+            break
+
+        case .notDetermined:
+            await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+
+        default:
+            throw SessionError.saveVideoToLibraryError
+        }
+
+        try await PHPhotoLibrary.shared().performChanges {
+            PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
+        }
     }
 }
 
@@ -42,7 +76,7 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
     ) {
         Task { @VideoRecordingActor in
             //обрабатываем захваченные феймы
-            switch captureState {
+            switch recordingState {
                 //старт записи видео
             case .start:
                 setupVideoOutput(sampleBuffer: sampleBuffer)
@@ -50,7 +84,7 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
                 await startRecording(sampleBuffer: sampleBuffer)
 
                 //запись видео
-            case .capturing:
+            case .recording:
                 captureVideoBuffer(sampleBuffer: sampleBuffer)
                 captureAudioBuffer(sampleBuffer: sampleBuffer)
 
@@ -97,7 +131,7 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
         )
         assetWriter.startWriting(buffer: sampleBuffer)
 
-        captureState = .capturing
+        recordingState = .recording
     }
 
     //захват видео буфера
@@ -106,7 +140,7 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video,
-            captureState == .capturing
+            recordingState == .recording
         else { return }
         assetWriter.writeVideo(
             buffer: sampleBuffer,
@@ -120,7 +154,7 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             let assetWriter,
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Audio,
-            captureState == .capturing
+            recordingState == .recording
         else { return }
         assetWriter.writeAudio(buffer: sampleBuffer)
     }

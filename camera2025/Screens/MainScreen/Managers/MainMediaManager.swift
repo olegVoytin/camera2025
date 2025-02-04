@@ -56,7 +56,12 @@ final class MainMediaManager {
 
     func startVideoRecording() async throws {
         audioSessionManager.startRunning()
-        try await videoRecordingManager.startVideoRecord()
+        try await videoRecordingManager.startVideoRecording()
+    }
+
+    func stopVideoRecording() async throws {
+        audioSessionManager.stopRunning()
+        try await videoRecordingManager.stopVideoRecording()
     }
 }
 
@@ -68,6 +73,7 @@ enum SessionError: Error {
     case setTorchValueError
     case makePhotoError
     case savePhotoToLibraryError
+    case saveVideoToLibraryError
 
     var localizedDescription: String {
         switch self {
@@ -91,6 +97,9 @@ enum SessionError: Error {
 
         case .savePhotoToLibraryError:
             return "Could not save photo to library."
+
+        case .saveVideoToLibraryError:
+            return "Could not save video to library."
         }
     }
 }

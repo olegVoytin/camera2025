@@ -11,7 +11,7 @@ import AVFoundation
 struct MainScreenView: View {
 
     let videoCaptureSession: AVCaptureSession
-    let actionHandler: MainScreenActionHandler
+    let actionModel: MainScreenModel
 
     var body: some View {
         ZStack {
@@ -22,7 +22,7 @@ struct MainScreenView: View {
 
                 HStack(spacing: 30) {
                     Button(
-                        action: { actionHandler.triggerAction(.startVideoRecording) },
+                        action: { actionModel.triggerAction(.startVideoRecording) },
                         label: {
                             Color.red
                                 .frame(width: 50, height: 50)
@@ -30,7 +30,7 @@ struct MainScreenView: View {
                     )
 
                     Button(
-                        action: { actionHandler.triggerAction(.takePhoto) },
+                        action: { actionModel.triggerAction(.takePhoto) },
                         label: {
                             Color.white
                                 .frame(width: 100, height: 100)
