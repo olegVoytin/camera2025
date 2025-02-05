@@ -93,7 +93,7 @@ extension MainScreenPresenter: @preconcurrency AVCapturePhotoCaptureDelegate {
         Task {
             guard let data = photo.fileDataRepresentation() else { return }
             try? await mainMediaManager.savePhotoInGallery(data)
-            onTakingPhotoPossible()
+            model.isTakingPhotoPossible = true
         }
     }
     
@@ -103,10 +103,5 @@ extension MainScreenPresenter: @preconcurrency AVCapturePhotoCaptureDelegate {
         error: Error?
     ) {
 
-    }
-
-    @MainActor
-    private func onTakingPhotoPossible() {
-        model.isTakingPhotoPossible = true
     }
 }

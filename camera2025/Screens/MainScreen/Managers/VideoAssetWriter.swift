@@ -91,11 +91,9 @@ final class VideoAssetWriter {
         switch assetWriter.status {
         case .unknown:
             let startTime = CMSampleBufferGetPresentationTimeStamp(buffer)
-            let startingTimeDelay = CMTimeMakeWithSeconds(0.7, preferredTimescale: 1_000_000_000)
-            let startTimeToUse = CMTimeAdd(startTime, startingTimeDelay)
 
             assetWriter.startWriting()
-            assetWriter.startSession(atSourceTime: startTimeToUse)
+            assetWriter.startSession(atSourceTime: startTime)
 
             return true
 
