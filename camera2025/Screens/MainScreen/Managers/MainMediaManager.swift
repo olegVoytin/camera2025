@@ -23,29 +23,24 @@ final class MainMediaManager {
         self.deviceManager = try DeviceManager()
     }
 
-    func startCapture(photoNotificationsObserver: AVCapturePhotoCaptureDelegate) async {
-        do {
-            try deviceManager.start(
-                videoBufferDelegate: videoRecordingManager,
-                audioBufferDelegate: videoRecordingManager
-            )
-            let deviceOrientation = await deviceManager.getDeviceOrientation()
-            try videoSessionManager.start(
-                videoDeviceInput: deviceManager.videoDeviceInput,
-                videoOutput: deviceManager.videoOutput,
-                photoOutput: photoTakingManager.photoOutput,
-                deviceOrientation: deviceOrientation
-            )
-            try audioSessionManager.start(
-                audioInput: deviceManager.audioDeviceInput,
-                audioOutput: deviceManager.audioOutput
-            )
-        } catch {
-            guard let error = error as? SessionError else { return }
-            print(error.localizedDescription)
-        }
-
+    func startCapture(photoNotificationsObserver: AVCapturePhotoCaptureDelegate) async throws {
         photoTakingManager.delegate = photoNotificationsObserver
+
+        try deviceManager.start(
+            videoBufferDelegate: videoRecordingManager,
+            audioBufferDelegate: videoRecordingManager
+        )
+        let deviceOrientation = await deviceManager.getDeviceOrientation()
+        try videoSessionManager.start(
+            videoDeviceInput: deviceManager.videoDeviceInput,
+            videoOutput: deviceManager.videoOutput,
+            photoOutput: photoTakingManager.photoOutput,
+            deviceOrientation: deviceOrientation
+        )
+        try audioSessionManager.start(
+            audioInput: deviceManager.audioDeviceInput,
+            audioOutput: deviceManager.audioOutput
+        )
     }
 
     func takePhoto() async throws {
@@ -54,7 +49,9 @@ final class MainMediaManager {
             deviceOrientation: deviceOrientation,
             photoOutput: photoTakingManager.photoOutput
         )
-        try photoTakingManager.takePhoto()
+
+        let flashMode = AVCaptureDevice.FlashMode(rawValue: deviceManager.torchMode?.rawValue ?? 0) ?? .off
+        try photoTakingManager.takePhoto(flashMode: flashMode)
     }
 
     func savePhotoInGallery(_ imageData: Data) async throws {
@@ -116,6 +113,10 @@ final class MainMediaManager {
             throw error
         }
     }
+
+    func setNewTorchMode(_ newTorchModeRawValue: Int) throws {
+        deviceManager.torchMode = AVCaptureDevice.TorchMode(rawValue: newTorchModeRawValue)
+    }
 }
 
 enum SessionError: Error {
@@ -123,11 +124,11 @@ enum SessionError: Error {
     case addAudioInputError
     case addVideoOutputError
     case addPhotoOutputError
-    case setTorchValueError
     case makePhotoError
     case savePhotoToLibraryError
     case saveVideoToLibraryError
     case changeCameraPositionError
+    case changeTorchModeError
 
     var localizedDescription: String {
         switch self {
@@ -136,9 +137,6 @@ enum SessionError: Error {
 
         case .addVideoOutputError:
             return "Could not add video output."
-
-        case .setTorchValueError:
-            return "Could not set torch value."
 
         case .addAudioInputError:
             return "Could not add audio input."
@@ -157,6 +155,9 @@ enum SessionError: Error {
 
         case .changeCameraPositionError:
             return "Could not change camera position."
+
+        case .changeTorchModeError:
+            return "Could not change torch mode."
         }
     }
 }

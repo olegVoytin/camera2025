@@ -18,7 +18,7 @@ final class AppManager: ObservableObject {
         do {
             let mainMediaManager = try await MainMediaManager(deviceManager: DeviceManager())
             let mainScreenPresenter = await MainScreenPresenter(mainMediaManager: mainMediaManager)
-            await mainScreenPresenter.startSession()
+            try await mainScreenPresenter.startSession()
 
             let model = mainScreenPresenter.model
             let videoCaptureSession = await mainScreenPresenter.videoCaptureSession

@@ -22,9 +22,9 @@ final class PhotoTakingManager {
         photoOutput.maxPhotoQualityPrioritization = .quality
     }
 
-    func takePhoto() throws {
+    func takePhoto(flashMode: AVCaptureDevice.FlashMode) throws {
         guard let delegate else { throw SessionError.makePhotoError }
-        let settings = makePhotoSettings()
+        let settings = makePhotoSettings(flashMode: flashMode)
         photoOutput.capturePhoto(with: settings, delegate: delegate)
     }
 
@@ -48,7 +48,7 @@ final class PhotoTakingManager {
         }
     }
 
-    private func makePhotoSettings() -> AVCapturePhotoSettings {
+    private func makePhotoSettings(flashMode: AVCaptureDevice.FlashMode) -> AVCapturePhotoSettings {
         var photoSettings = AVCapturePhotoSettings()
 
         if self.photoOutput.availablePhotoCodecTypes.contains(.jpeg) {
@@ -56,10 +56,15 @@ final class PhotoTakingManager {
         }
 
         photoSettings.isHighResolutionPhotoEnabled = true
+        photoSettings.photoQualityPrioritization = .quality
+
+        if photoOutput.supportedFlashModes.contains(flashMode) {
+            photoSettings.flashMode = flashMode
+        }
+
         if !photoSettings.__availablePreviewPhotoPixelFormatTypes.isEmpty {
             photoSettings.previewPhotoFormat = [kCVPixelBufferPixelFormatTypeKey as String: photoSettings.__availablePreviewPhotoPixelFormatTypes.first!]
         }
-        photoSettings.photoQualityPrioritization = .quality
 
         return photoSettings
     }

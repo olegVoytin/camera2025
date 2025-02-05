@@ -16,6 +16,8 @@ final class DeviceManager {
     var audioDeviceInput: AVCaptureDeviceInput
     let audioOutput = AVCaptureAudioDataOutput()
 
+    var torchMode: AVCaptureDevice.TorchMode?
+
     private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(
         deviceTypes: [
             .builtInWideAngleCamera,
@@ -97,6 +99,19 @@ final class DeviceManager {
     @MainActor
     func getDeviceOrientation() -> UIDeviceOrientation {
         UIDevice.current.orientation
+    }
+
+    func setNewTorchMode(_ newValue: Int) throws {
+        let device = videoDeviceInput.device
+        try device.lockForConfiguration()
+        
+        if let torchMode = AVCaptureDevice.TorchMode(rawValue: newValue),
+           device.hasTorch,
+           device.isTorchModeSupported(torchMode) {
+            device.torchMode = torchMode
+        }
+
+        device.unlockForConfiguration()
     }
 
     private func getNewDevice() -> AVCaptureDevice? {

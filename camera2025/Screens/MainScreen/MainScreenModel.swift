@@ -15,6 +15,8 @@ final class MainScreenModel {
     var isVideoRecordingActive: Bool = false
     var isVideoRecordingStateChangePossible: Bool = true
 
+    var selectedTorchMode: TorchMode?
+
     let triggerAction: (Action) -> Void
 
     init(triggerAction: @escaping (Action) -> Void) {
@@ -27,4 +29,11 @@ enum Action {
     case startVideoRecording
     case stopVideoRecording
     case changeCameraPosition
+    case setNewTorchMode(TorchMode)
+}
+
+enum TorchMode: Int {
+    case off = 0
+    case on
+    case auto
 }

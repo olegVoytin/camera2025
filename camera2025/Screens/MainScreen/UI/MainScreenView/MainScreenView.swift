@@ -21,26 +21,65 @@ struct MainScreenView: View {
 
             PreviewView(videoCaptureSession: videoCaptureSession)
 
-            VStack {
-                Spacer()
-                HStack(spacing: 30) {
-                    VideoButton(model: model)
+            topButtons
 
-                    if !model.isVideoRecordingActive {
-                        PhotoButton(model: model, onTakePhoto: onTakePhoto)
-                            .transition(.opacity)
-                    }
-
-                    ChangeCameraButton(model: model)
-                }
-                .padding(.bottom, 20)
-            }
-            .animation(.spring, value: model.isVideoRecordingActive)
+            bottomButtons
 
             Color.white
                 .opacity(shutterOpacity)
                 .ignoresSafeArea()
         }
+    }
+
+    private var topButtons: some View {
+        HStack {
+            Button(
+                action: { model.triggerAction(.setNewTorchMode(.off)) },
+                label: {
+                    Image(systemName: "bolt.slash.fill")
+                        .frame(width: 50, height: 50)
+                }
+            )
+            .foregroundStyle(model.selectedTorchMode == .off ? .yellow : .white)
+
+            Button(
+                action: { model.triggerAction(.setNewTorchMode(.on)) },
+                label: {
+                    Image(systemName: "bolt.fill")
+                        .frame(width: 50, height: 50)
+                }
+            )
+            .foregroundStyle(model.selectedTorchMode == .on ? .yellow : .white)
+
+            Button(
+                action: { model.triggerAction(.setNewTorchMode(.auto)) },
+                label: {
+                    Image(systemName: "bolt.badge.automatic.fill")
+                        .frame(width: 50, height: 50)
+                }
+            )
+            .foregroundStyle(model.selectedTorchMode == .auto ? .yellow : .white)
+
+            Spacer()
+        }
+        .padding(20)
+        .frame(maxHeight: .infinity, alignment: .top)
+    }
+
+    private var bottomButtons: some View {
+        HStack(spacing: 30) {
+            VideoButton(model: model)
+
+            if !model.isVideoRecordingActive {
+                PhotoButton(model: model, onTakePhoto: onTakePhoto)
+                    .transition(.opacity)
+            }
+
+            ChangeCameraButton(model: model)
+        }
+        .padding(.bottom, 20)
+        .animation(.spring, value: model.isVideoRecordingActive)
+        .frame(maxHeight: .infinity, alignment: .bottom)
     }
 
     private func onTakePhoto() {

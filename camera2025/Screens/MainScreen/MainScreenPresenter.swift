@@ -27,8 +27,8 @@ final class MainScreenPresenter: NSObject {
         super.init()
     }
 
-    func startSession() async {
-        await mainMediaManager.startCapture(photoNotificationsObserver: self)
+    func startSession() async throws {
+        try await mainMediaManager.startCapture(photoNotificationsObserver: self)
     }
 
     private func handleAction(_ action: Action) {
@@ -70,6 +70,12 @@ final class MainScreenPresenter: NSObject {
         case .changeCameraPosition:
             Task {
                 try? await mainMediaManager.changeCameraPosition()
+            }
+
+        case .setNewTorchMode(let newTorchMode):
+            Task { @MainActor in
+                try? await mainMediaManager.setNewTorchMode(newTorchMode.rawValue)
+                model.selectedTorchMode = newTorchMode
             }
         }
     }
