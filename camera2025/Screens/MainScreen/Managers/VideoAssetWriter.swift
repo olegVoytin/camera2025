@@ -60,6 +60,7 @@ final class VideoAssetWriter {
 
     func setupAudioInputIfNeeded(stream: UnsafePointer<AudioStreamBasicDescription>) {
         guard self.audioInput == nil else { return }
+
         let audioOutputSettings = [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
             AVNumberOfChannelsKey: stream.pointee.mChannelsPerFrame,

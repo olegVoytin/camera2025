@@ -9,9 +9,10 @@ import SwiftUI
 import AVFoundation
 
 struct MainScreenView: View {
-
     let videoCaptureSession: AVCaptureSession
     let model: MainScreenModel
+
+    @State private var shutterOpacity: Double = 0.0
 
     var body: some View {
         ZStack {
@@ -19,21 +20,41 @@ struct MainScreenView: View {
 
             VStack {
                 Spacer()
-
                 HStack(spacing: 30) {
                     VideoButton(model: model)
-                    PhotoButton(model: model)
+                    PhotoButton(model: model, onTakePhoto: onTakePhoto)
                     ChangeCameraButton(model: model)
                 }
                 .padding(.bottom, 20)
+            }
+
+            Color.white
+                .opacity(shutterOpacity)
+                .ignoresSafeArea()
+        }
+    }
+
+    private func onTakePhoto() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        Task { @MainActor in
+            withAnimation(.easeIn(duration: 0.1)) {
+                shutterOpacity = 0.8
+            }
+
+            generator.impactOccurred()
+
+            try? await Task.sleep(nanoseconds: 100_000_000)
+
+            withAnimation(.easeOut(duration: 0.2)) {
+                shutterOpacity = 0.0
             }
         }
     }
 }
 
 private struct PhotoButton: View {
-
     let model: MainScreenModel
+    let onTakePhoto: () -> Void
     @State private var isPressed: Bool = false
 
     var body: some View {
@@ -59,8 +80,8 @@ private struct PhotoButton: View {
             pressing: { pressed in
                 if !pressed {
                     model.triggerAction(.takePhoto)
+                    onTakePhoto()
                 }
-
                 isPressed = pressed
             },
             perform: {}
@@ -71,7 +92,6 @@ private struct PhotoButton: View {
 }
 
 private struct VideoButton: View {
-
     let model: MainScreenModel
 
     @State private var isPressed: Bool = false
@@ -101,7 +121,6 @@ private struct VideoButton: View {
                         model.isVideoRecordingActive ? .stopVideoRecording : .startVideoRecording
                     )
                 }
-
                 isPressed = pressed
             },
             perform: {}
@@ -113,7 +132,6 @@ private struct VideoButton: View {
 }
 
 private struct ChangeCameraButton: View {
-
     let model: MainScreenModel
     @State private var isPressed: Bool = false
 
@@ -140,7 +158,6 @@ private struct ChangeCameraButton: View {
                 if !pressed {
                     model.triggerAction(.changeCameraPosition)
                 }
-
                 isPressed = pressed
             },
             perform: {}
