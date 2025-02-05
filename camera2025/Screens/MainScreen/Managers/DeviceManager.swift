@@ -101,14 +101,22 @@ final class DeviceManager {
         UIDevice.current.orientation
     }
 
-    func setNewTorchMode(_ newValue: Int) throws {
+    func enableSelectedTorchMode() throws {
+        guard let torchMode else { return }
+        try setNewTorchValue(torchMode)
+    }
+
+    func disableTorch() throws {
+        try setNewTorchValue(.off)
+    }
+
+    private func setNewTorchValue(_ newValue: AVCaptureDevice.TorchMode) throws {
         let device = videoDeviceInput.device
         try device.lockForConfiguration()
-        
-        if let torchMode = AVCaptureDevice.TorchMode(rawValue: newValue),
-           device.hasTorch,
-           device.isTorchModeSupported(torchMode) {
-            device.torchMode = torchMode
+
+        if device.hasTorch,
+           device.isTorchModeSupported(newValue) {
+            device.torchMode = newValue
         }
 
         device.unlockForConfiguration()

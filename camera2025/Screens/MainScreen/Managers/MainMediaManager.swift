@@ -59,6 +59,8 @@ final class MainMediaManager {
     }
 
     func startVideoRecording() async throws {
+        try deviceManager.enableSelectedTorchMode()
+
         let deviceOrientation = await deviceManager.getDeviceOrientation()
         videoSessionManager.setupOrientation(
             deviceOrientation: deviceOrientation,
@@ -82,6 +84,7 @@ final class MainMediaManager {
 
     func stopVideoRecording() async throws {
         audioSessionManager.stopRunning()
+        try deviceManager.disableTorch()
 
         do {
             try await videoRecordingManager.stopRecording()
@@ -111,6 +114,11 @@ final class MainMediaManager {
         } catch {
             await videoRecordingManager.reset()
             throw error
+        }
+
+        let recordingState = await videoRecordingManager.recordingState
+        if recordingState == .recording || recordingState == .start {
+            try deviceManager.enableSelectedTorchMode()
         }
     }
 

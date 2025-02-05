@@ -29,6 +29,7 @@ final class MainScreenPresenter: NSObject {
 
     func startSession() async throws {
         try await mainMediaManager.startCapture(photoNotificationsObserver: self)
+        handleAction(.setNewTorchMode(.auto))
     }
 
     private func handleAction(_ action: Action) {
