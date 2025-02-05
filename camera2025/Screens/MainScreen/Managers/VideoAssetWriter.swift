@@ -13,7 +13,7 @@ final class VideoAssetWriter {
 
     // MARK: - Свойства для записи
 
-    private var videoInput: VideoInput?
+    private var videoInput: AVAssetWriterInput?
     private var audioInput: AVAssetWriterInput?
     private var assetWriterInputPixelBufferAdator: AVAssetWriterInputPixelBufferAdaptor?
 
@@ -38,11 +38,11 @@ final class VideoAssetWriter {
 
         let writerOutputSettings = [
             AVVideoCodecKey: AVVideoCodecType.h264,
-            AVVideoWidthKey: captureResolution.height,
-            AVVideoHeightKey: captureResolution.width
+            AVVideoWidthKey: captureResolution.width,
+            AVVideoHeightKey: captureResolution.height
         ] as [String: Any]
 
-        self.videoInput = VideoInput(
+        self.videoInput = AVAssetWriterInput(
             mediaType: AVMediaType.video,
             outputSettings: writerOutputSettings
         )
@@ -112,42 +112,6 @@ final class VideoAssetWriter {
        await assetWriter.finishWriting()
     }
 
-    func rotateVideoRelatedOrientation(
-        isVideoRecordStartedFromFrontCamera: Bool,
-        currentOrientation: UIDeviceOrientation
-    ) async {
-        guard let videoInput else { return }
-        await rotateVideoRelatedOrientation(
-            transformableVideoInput: videoInput,
-            currentTransform: videoInput.transform,
-            isVideoRecordStartedFromFrontCamera: isVideoRecordStartedFromFrontCamera,
-            currentOrientation: currentOrientation
-        )
-    }
-
-    @MainActor
-    private func rotateVideoRelatedOrientation(
-        transformableVideoInput: AssetWriterInputTransformable,
-        currentTransform: CGAffineTransform,
-        isVideoRecordStartedFromFrontCamera: Bool,
-        currentOrientation: UIDeviceOrientation
-    ) {
-        let angle: CGFloat
-//        switch (isVideoRecordStartedFromFrontCamera, currentOrientation) {
-//        case (true, .landscapeLeft), (false, .landscapeRight):
-            angle = .pi / 2
-//
-//        case (true, .landscapeRight), (false, .landscapeLeft):
-//            angle = -.pi / 2
-//
-//        default:
-//            return
-//        }
-
-//        transformableVideoInput.transform(newTransform: CGAffineTransform.identity)
-//        transformableVideoInput.transform(newTransform: currentTransform.rotated(by: angle))
-    }
-
     // MARK: - Методы записи данных
     func writeVideo(buffer: CMSampleBuffer, currentFrameRate: Int) {
         guard
@@ -177,15 +141,4 @@ final class VideoAssetWriter {
 
 enum AssetWriterError: Error {
     case failedToCreateFileURL
-}
-
-@MainActor
-private protocol AssetWriterInputTransformable {
-    func transform(newTransform: CGAffineTransform)
-}
-
-private final class VideoInput: AVAssetWriterInput, AssetWriterInputTransformable {
-    func transform(newTransform: CGAffineTransform) {
-        self.transform = newTransform
-    }
 }

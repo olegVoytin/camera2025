@@ -17,6 +17,8 @@ final class VideoRecordingManager: NSObject {
     }
 
     var recordingState: RecordingState = .idle
+    var recordingDeviceOrientation: UIDeviceOrientation?
+
     private var assetWriter: VideoAssetWriter?
 
     // MARK: - Свойства для работы с сегментами (пауза/возобновление)
@@ -50,10 +52,12 @@ final class VideoRecordingManager: NSObject {
 
     @MainMediaActor override init() {}
 
-    func startNewRecording(captureResolution: CGSize) throws {
-        segments = []
-        currentSegmentIndex = 0
-        recordedVideoFileURL = nil
+    func startNewRecording(
+        captureResolution: CGSize,
+        recordingDeviceOrientation: UIDeviceOrientation
+    ) throws {
+        reset()
+        self.recordingDeviceOrientation = recordingDeviceOrientation
 
         // Удаляем старую папку с видео (если существует) только один раз
         if FileManager.default.fileExists(atPath: videoDirectoryPath) {
@@ -107,6 +111,16 @@ final class VideoRecordingManager: NSObject {
         }
 
         self.assetWriter = nil
+        recordingDeviceOrientation = nil
+    }
+
+    func reset() {
+        segments = []
+        currentSegmentIndex = 0
+        recordedVideoFileURL = nil
+        recordingDeviceOrientation = nil
+        assetWriter = nil
+        recordingState = .idle
     }
 
     private func recordNewSegment(captureResolution: CGSize) throws {
@@ -246,12 +260,6 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             let format = CMSampleBufferGetFormatDescription(sampleBuffer),
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video
         else { return }
-
-        let currentOrientation = await getDeviceOrientation()
-        await assetWriter.rotateVideoRelatedOrientation(
-            isVideoRecordStartedFromFrontCamera: true,
-            currentOrientation: currentOrientation
-        )
 
         let isWritingStarted = assetWriter.startWritingIfReady(buffer: sampleBuffer)
         if isWritingStarted {

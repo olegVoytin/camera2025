@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import UIKit
 
 @MainMediaActor
 final class VideoSessionManager {
@@ -19,7 +20,8 @@ final class VideoSessionManager {
     func start(
         videoDeviceInput: AVCaptureDeviceInput,
         videoOutput: AVCaptureVideoDataOutput,
-        photoOutput: AVCapturePhotoOutput
+        photoOutput: AVCapturePhotoOutput,
+        deviceOrientation: UIDeviceOrientation
     ) throws {
         videoSession.beginConfiguration()
 
@@ -27,7 +29,7 @@ final class VideoSessionManager {
 
         do {
             try addVideoInput(videoDeviceInput: videoDeviceInput)
-            try addVideoOutput(videoOutput: videoOutput)
+            try addVideoOutput(deviceOrientation: deviceOrientation, videoOutput: videoOutput)
             try addPhotoOutput(photoOutput: photoOutput)
         } catch {
             videoSession.commitConfiguration()
@@ -42,7 +44,8 @@ final class VideoSessionManager {
     func setNewDeviceToSession(
         oldInput: AVCaptureDeviceInput,
         newInput: AVCaptureDeviceInput,
-        videoOutput: AVCaptureVideoDataOutput
+        videoOutput: AVCaptureVideoDataOutput,
+        deviceOrientation: UIDeviceOrientation
     ) {
         videoSession.beginConfiguration()
 
@@ -52,15 +55,34 @@ final class VideoSessionManager {
             videoSession.addInput(newInput)
         }
 
+        setupOrientation(deviceOrientation: deviceOrientation, videoOutput: videoOutput)
+
+        videoSession.commitConfiguration()
+    }
+
+    func setupOrientation(
+        deviceOrientation: UIDeviceOrientation,
+        videoOutput: AVCaptureVideoDataOutput
+    ) {
         if let connection = videoOutput.connection(with: .video) {
-            connection.videoOrientation = .portrait
+            switch deviceOrientation {
+            case .portrait:
+                connection.videoOrientation = .portrait
+
+            case .landscapeLeft:
+                connection.videoOrientation = .landscapeRight
+
+            case .landscapeRight:
+                connection.videoOrientation = .landscapeLeft
+
+            default:
+                break
+            }
 
             if connection.isVideoStabilizationSupported {
                 connection.preferredVideoStabilizationMode = .standard
             }
         }
-
-        videoSession.commitConfiguration()
     }
 
     private func addVideoInput(videoDeviceInput: AVCaptureDeviceInput) throws {
@@ -70,20 +92,17 @@ final class VideoSessionManager {
         videoSession.addInput(videoDeviceInput)
     }
 
-    private func addVideoOutput(videoOutput: AVCaptureVideoDataOutput) throws {
+    private func addVideoOutput(
+        deviceOrientation: UIDeviceOrientation,
+        videoOutput: AVCaptureVideoDataOutput
+    ) throws {
         guard videoSession.canAddOutput(videoOutput) else { throw SessionError.addVideoOutputError }
 
         videoSession.beginConfiguration()
 
         videoSession.addOutput(videoOutput)
 
-        if let connection = videoOutput.connection(with: .video) {
-            connection.videoOrientation = .portrait
-
-            if connection.isVideoStabilizationSupported {
-                connection.preferredVideoStabilizationMode = .standard
-            }
-        }
+        setupOrientation(deviceOrientation: deviceOrientation, videoOutput: videoOutput)
 
         videoSession.commitConfiguration()
     }

@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import UIKit
 
 @MainMediaActor
 final class DeviceManager {
@@ -57,10 +58,30 @@ final class DeviceManager {
         audioOutput.setSampleBufferDelegate(audioBufferDelegate, queue: bufferQueue)
     }
 
-    func getCameraResolution() -> CGSize {
+    func getCameraResolution() async -> CGSize {
         let formatDescription = videoDeviceInput.device.activeFormat.formatDescription
         let dimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
-        return CGSize(width: CGFloat(dimensions.width), height: CGFloat(dimensions.height))
+        let deviceOrientation = await getDeviceOrientation()
+
+        let height: CGFloat = {
+            switch deviceOrientation {
+            case .portrait, .portraitUpsideDown:
+                return CGFloat(dimensions.width)
+            default:
+                return CGFloat(dimensions.height)
+            }
+        }()
+
+        let width: CGFloat = {
+            switch deviceOrientation {
+            case .portrait, .portraitUpsideDown:
+                return CGFloat(dimensions.height)
+            default:
+                return CGFloat(dimensions.width)
+            }
+        }()
+
+        return CGSize(width: width, height: height)
     }
 
     func setNewInput() throws -> (oldInput: AVCaptureDeviceInput, newInput: AVCaptureDeviceInput) {
@@ -71,6 +92,11 @@ final class DeviceManager {
         videoDeviceInput = newInput
 
         return (oldInput: oldInput, newInput: newInput)
+    }
+
+    @MainActor
+    func getDeviceOrientation() -> UIDeviceOrientation {
+        UIDevice.current.orientation
     }
 
     private func getNewDevice() -> AVCaptureDevice? {

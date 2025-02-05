@@ -23,16 +23,18 @@ final class MainMediaManager {
         self.deviceManager = try DeviceManager()
     }
 
-    func startCapture(photoNotificationsObserver: PhotoCaptureObserver) {
+    func startCapture(photoNotificationsObserver: PhotoCaptureObserver) async {
         do {
             try deviceManager.start(
                 videoBufferDelegate: videoRecordingManager,
                 audioBufferDelegate: videoRecordingManager
             )
+            let deviceOrientation = await deviceManager.getDeviceOrientation()
             try videoSessionManager.start(
                 videoDeviceInput: deviceManager.videoDeviceInput,
                 videoOutput: deviceManager.videoOutput,
-                photoOutput: photoTakingManager.photoOutput
+                photoOutput: photoTakingManager.photoOutput,
+                deviceOrientation: deviceOrientation
             )
             try audioSessionManager.start(
                 audioInput: deviceManager.audioDeviceInput,
@@ -55,28 +57,59 @@ final class MainMediaManager {
     }
 
     func startVideoRecording() async throws {
+        let deviceOrientation = await deviceManager.getDeviceOrientation()
+        videoSessionManager.setupOrientation(
+            deviceOrientation: deviceOrientation,
+            videoOutput: deviceManager.videoOutput
+        )
+
         audioSessionManager.startRunning()
 
-        let cameraResolution = deviceManager.getCameraResolution()
-        try await videoRecordingManager.startNewRecording(captureResolution: cameraResolution)
+        let cameraResolution = await deviceManager.getCameraResolution()
+
+        do {
+            try await videoRecordingManager.startNewRecording(
+                captureResolution: cameraResolution,
+                recordingDeviceOrientation: deviceOrientation
+            )
+        } catch {
+            await videoRecordingManager.reset()
+            throw error
+        }
     }
 
     func stopVideoRecording() async throws {
         audioSessionManager.stopRunning()
-        try await videoRecordingManager.stopRecording()
+
+        do {
+            try await videoRecordingManager.stopRecording()
+        } catch {
+            await videoRecordingManager.reset()
+            throw error
+        }
     }
 
     func changeCameraPosition() async throws {
         await videoRecordingManager.pauseRecordingIfNeeded()
 
+        let recordingDeviceOrientation = await videoRecordingManager.recordingDeviceOrientation
+        let deviceOrientation = await deviceManager.getDeviceOrientation()
+        let deviceOrientationToUse = recordingDeviceOrientation ?? deviceOrientation
         let (oldInput, newInput) = try deviceManager.setNewInput()
         videoSessionManager.setNewDeviceToSession(
             oldInput: oldInput,
             newInput: newInput,
-            videoOutput: deviceManager.videoOutput
+            videoOutput: deviceManager.videoOutput,
+            deviceOrientation: deviceOrientationToUse
         )
 
-        try await videoRecordingManager.resumeRecordingIfNeeded(captureResolution: deviceManager.getCameraResolution())
+        do {
+            let cameraResolution = await deviceManager.getCameraResolution()
+            try await videoRecordingManager.resumeRecordingIfNeeded(captureResolution: cameraResolution)
+        } catch {
+            await videoRecordingManager.reset()
+            throw error
+        }
     }
 }
 

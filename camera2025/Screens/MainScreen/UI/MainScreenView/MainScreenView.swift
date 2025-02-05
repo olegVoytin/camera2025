@@ -66,6 +66,7 @@ private struct PhotoButton: View {
             perform: {}
         )
         .allowsHitTesting(model.isTakingPhotoPossible)
+        .opacity(model.isTakingPhotoPossible ? 1 : 0.3)
     }
 }
 
@@ -105,8 +106,9 @@ private struct VideoButton: View {
             },
             perform: {}
         )
-        .animation(.spring, value: model.isVideoRecordingActive)
         .allowsHitTesting(model.isVideoRecordingStateChangePossible)
+        .opacity(model.isVideoRecordingStateChangePossible ? 1 : 0.3)
+        .animation(.spring, value: model.isVideoRecordingActive)
     }
 }
 

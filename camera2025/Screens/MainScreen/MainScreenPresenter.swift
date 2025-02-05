@@ -30,8 +30,8 @@ final class MainScreenPresenter: NSObject {
         photoCaptureObserver.delegate = self
     }
 
-    func startSession() {
-        mainMediaManager.startCapture(photoNotificationsObserver: photoCaptureObserver)
+    func startSession() async {
+        await mainMediaManager.startCapture(photoNotificationsObserver: photoCaptureObserver)
     }
 
     private func handleAction(_ action: Action) {
