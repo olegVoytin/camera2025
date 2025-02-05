@@ -13,7 +13,7 @@ import Photos
 final class VideoRecordingManager: NSObject {
 
     private enum RecordingState {
-        case idle, start, recording
+        case idle, start, recording, paused
     }
 
     private var recordingState: RecordingState = .idle
@@ -38,13 +38,28 @@ final class VideoRecordingManager: NSObject {
 
         recordingState = .idle
 
-        try await assetWriter.finishWriting()
+        try await assetWriter.finishRecording()
 
         if let recordedVideoFileURL = assetWriter.recordedVideoFileURL {
             try await saveVideoInGallery(url: recordedVideoFileURL)
         }
 
         self.assetWriter = nil
+    }
+
+    func rotateVideoOutput() async throws {
+        recordingState = .paused
+        try! await assetWriter?.pauseRecording()
+
+        let currentOrientation = await getDeviceOrientation()
+        await assetWriter?.rotateVideoRelatedOrientation(
+            isVideoRecordStartedFromFrontCamera: true,
+            previousVideoOrientation: previousVideoOrientation,
+            currentOrientation: currentOrientation
+        )
+
+        try assetWriter?.resumeRecording()
+        recordingState = .start
     }
 
     nonisolated private func saveVideoInGallery(url: URL) async throws {
@@ -115,12 +130,12 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video
         else { return }
 
-        let currentOrientation = await getDeviceOrientation()
-        assetWriter.rotateVideoRelatedOrientation(
-            isVideoRecordStartedFromFrontCamera: true,
-            previousVideoOrientation: previousVideoOrientation,
-            currentOrientation: currentOrientation
-        )
+//        let currentOrientation = await getDeviceOrientation()
+//        await assetWriter.rotateVideoRelatedOrientation(
+//            isVideoRecordStartedFromFrontCamera: true,
+//            previousVideoOrientation: previousVideoOrientation,
+//            currentOrientation: currentOrientation
+//        )
         let isWritingStarted = assetWriter.startWritingIfReady(buffer: sampleBuffer)
 
         if isWritingStarted {

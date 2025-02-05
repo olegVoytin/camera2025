@@ -16,7 +16,7 @@ final class AppManager: ObservableObject {
 
     func startCameraPreview() async {
         do {
-            let mainMediaManager = try await MainMediaManager(deviceInputManager: DeviceManager())
+            let mainMediaManager = try await MainMediaManager(deviceManager: DeviceManager())
             let mainScreenPresenter = await MainScreenPresenter(mainMediaManager: mainMediaManager)
             await mainScreenPresenter.startSession()
 

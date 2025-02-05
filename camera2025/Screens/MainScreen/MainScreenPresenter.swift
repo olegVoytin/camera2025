@@ -71,7 +71,9 @@ final class MainScreenPresenter: NSObject {
             }
 
         case .changeCameraPosition:
-            try? mainMediaManager.changeCameraPosition()
+            Task {
+                try? await mainMediaManager.changeCameraPosition()
+            }
         }
     }
 }

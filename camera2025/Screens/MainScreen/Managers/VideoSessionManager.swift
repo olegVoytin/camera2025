@@ -39,13 +39,25 @@ final class VideoSessionManager {
         videoSession.startRunning()
     }
 
-    func setNewDeviceToSession(oldInput: AVCaptureDeviceInput, newInput: AVCaptureDeviceInput) {
+    func setNewDeviceToSession(
+        oldInput: AVCaptureDeviceInput,
+        newInput: AVCaptureDeviceInput,
+        videoOutput: AVCaptureVideoDataOutput
+    ) {
         videoSession.beginConfiguration()
 
         videoSession.removeInput(oldInput)
 
         if videoSession.canAddInput(newInput) {
             videoSession.addInput(newInput)
+        }
+
+        if let connection = videoOutput.connection(with: .video) {
+            connection.videoOrientation = .portrait
+
+//            if connection.isVideoStabilizationSupported {
+//                connection.preferredVideoStabilizationMode = .standard
+//            }
         }
 
         videoSession.commitConfiguration()

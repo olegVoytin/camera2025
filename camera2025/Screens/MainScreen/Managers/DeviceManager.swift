@@ -36,11 +36,19 @@ final class DeviceManager {
         } else {
             throw SessionError.addVideoInputError
         }
-
+        
         if let audioDevice = AVCaptureDevice.default(for: .audio) {
             audioDeviceInput = try AVCaptureDeviceInput(device: audioDevice)
         } else {
             throw SessionError.addAudioInputError
+        }
+        
+        if let videoConnection = videoOutput.connection(with: .video) {
+            videoConnection.videoOrientation = .portrait
+            
+            if videoConnection.isVideoStabilizationSupported {
+                videoConnection.preferredVideoStabilizationMode = .standard
+            }
         }
     }
 
