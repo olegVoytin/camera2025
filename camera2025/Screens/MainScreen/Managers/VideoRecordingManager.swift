@@ -97,9 +97,12 @@ final class VideoRecordingManager: NSObject {
         recordingState = .idle
 
         await assetWriter.finishWriting()
+
         segments.append(currentSegmentFilePathURL)
 
         try await mergeSegments()
+
+        recordedVideoFileURL = finalMergedFileURL
 
         if let recordedVideoFileURL = recordedVideoFileURL {
             try await saveVideoInGallery(url: recordedVideoFileURL)
@@ -124,12 +127,12 @@ final class VideoRecordingManager: NSObject {
     /// Объединяет записанные сегменты в один файл с помощью AVMutableComposition и AVAssetExportSession
     private func mergeSegments() async throws {
         let composition = AVMutableComposition()
+
         guard let compositionVideoTrack = composition.addMutableTrack(
             withMediaType: .video,
             preferredTrackID: kCMPersistentTrackID_Invalid
-        ) else {
-            throw AssetWriterError.failedToCreateFileURL
-        }
+        ) else { throw AssetWriterError.failedToCreateFileURL }
+
         let compositionAudioTrack = composition.addMutableTrack(
             withMediaType: .audio,
             preferredTrackID: kCMPersistentTrackID_Invalid
@@ -138,11 +141,13 @@ final class VideoRecordingManager: NSObject {
         var currentTime = CMTime.zero
 
         for segmentURL in segments {
-            let asset = AVAsset(url: segmentURL)
-            let timeRange = CMTimeRange(start: .zero, duration: asset.duration)
+            let asset = AVURLAsset(url: segmentURL)
+            let duration = try await asset.load(.duration)
+            let timeRange = CMTimeRange(start: .zero, duration: duration)
 
             // Вставляем видео-трек
-            if let assetVideoTrack = asset.tracks(withMediaType: .video).first {
+            let videoTracks = try await asset.loadTracks(withMediaType: .video)
+            if let assetVideoTrack = videoTracks.first {
                 try compositionVideoTrack.insertTimeRange(
                     timeRange,
                     of: assetVideoTrack,
@@ -151,7 +156,8 @@ final class VideoRecordingManager: NSObject {
             }
 
             // Вставляем аудио-трек (если есть)
-            if let assetAudioTrack = asset.tracks(withMediaType: .audio).first,
+            let audioTracks = try await asset.loadTracks(withMediaType: .audio)
+            if let assetAudioTrack = audioTracks.first,
                let compositionAudioTrack = compositionAudioTrack {
                 try compositionAudioTrack.insertTimeRange(
                     timeRange,
@@ -160,30 +166,19 @@ final class VideoRecordingManager: NSObject {
                 )
             }
 
-            currentTime = CMTimeAdd(currentTime, asset.duration)
+            currentTime = CMTimeAdd(currentTime, duration)
         }
 
-        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else {
-            throw AssetWriterError.failedToCreateFileURL
-        }
+        guard let exportSession = AVAssetExportSession(
+            asset: composition,
+            presetName: AVAssetExportPresetHighestQuality
+        ) else { throw AssetWriterError.failedToCreateFileURL }
 
         exportSession.outputURL = finalMergedFileURL
         exportSession.outputFileType = .mov
         exportSession.timeRange = CMTimeRange(start: .zero, duration: composition.duration)
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            exportSession.exportAsynchronously {
-                if exportSession.status == .completed {
-                    continuation.resume(returning: ())
-                } else {
-                    let error = exportSession.error ?? NSError(domain: "MergeError", code: -1, userInfo: nil)
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-
-        recordedVideoFileURL = finalMergedFileURL
-        print("Сегменты объединены. Итоговый файл: \(finalMergedFileURL)")
+        try await exportSession.export(to: finalMergedFileURL, as: .mov)
     }
 
     nonisolated private func saveVideoInGallery(url: URL) async throws {
@@ -254,14 +249,14 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
             CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video
         else { return }
 
-//        let currentOrientation = await getDeviceOrientation()
-//        await assetWriter.rotateVideoRelatedOrientation(
-//            isVideoRecordStartedFromFrontCamera: true,
-//            previousVideoOrientation: previousVideoOrientation,
-//            currentOrientation: currentOrientation
-//        )
-        let isWritingStarted = assetWriter.startWritingIfReady(buffer: sampleBuffer)
+        let currentOrientation = await getDeviceOrientation()
+        await assetWriter.rotateVideoRelatedOrientation(
+            isVideoRecordStartedFromFrontCamera: true,
+            previousVideoOrientation: previousVideoOrientation,
+            currentOrientation: currentOrientation
+        )
 
+        let isWritingStarted = assetWriter.startWritingIfReady(buffer: sampleBuffer)
         if isWritingStarted {
             recordingState = .recording
         }

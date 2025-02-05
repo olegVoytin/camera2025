@@ -108,6 +108,10 @@ final class VideoAssetWriter {
         }
     }
 
+    func finishWriting() async {
+       await assetWriter.finishWriting()
+    }
+
     func rotateVideoRelatedOrientation(
         isVideoRecordStartedFromFrontCamera: Bool,
         previousVideoOrientation: AVCaptureVideoOrientation,
@@ -172,10 +176,6 @@ final class VideoAssetWriter {
             self.isFirstVideoFrameRecieved
         else { return }
         audioInput.append(buffer)
-    }
-
-    func finishWriting() async {
-       await assetWriter.finishWriting()
     }
 }
 
