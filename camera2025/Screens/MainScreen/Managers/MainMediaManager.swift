@@ -23,7 +23,7 @@ final class MainMediaManager {
         self.deviceManager = try DeviceManager()
     }
 
-    func startCapture(photoNotificationsObserver: PhotoCaptureObserver) async {
+    func startCapture(photoNotificationsObserver: AVCapturePhotoCaptureDelegate) async {
         do {
             try deviceManager.start(
                 videoBufferDelegate: videoRecordingManager,
@@ -48,7 +48,12 @@ final class MainMediaManager {
         photoTakingManager.delegate = photoNotificationsObserver
     }
 
-    func takePhoto() throws {
+    func takePhoto() async throws {
+        let deviceOrientation = await deviceManager.getDeviceOrientation()
+        videoSessionManager.setupOrientation(
+            deviceOrientation: deviceOrientation,
+            photoOutput: photoTakingManager.photoOutput
+        )
         try photoTakingManager.takePhoto()
     }
 

@@ -85,6 +85,31 @@ final class VideoSessionManager {
         }
     }
 
+    func setupOrientation(
+        deviceOrientation: UIDeviceOrientation,
+        photoOutput: AVCapturePhotoOutput
+    ) {
+        if let connection = photoOutput.connection(with: .video) {
+            switch deviceOrientation {
+            case .portrait:
+                connection.videoOrientation = .portrait
+
+            case .landscapeLeft:
+                connection.videoOrientation = .landscapeRight
+
+            case .landscapeRight:
+                connection.videoOrientation = .landscapeLeft
+
+            default:
+                break
+            }
+
+            if connection.isVideoStabilizationSupported {
+                connection.preferredVideoStabilizationMode = .standard
+            }
+        }
+    }
+
     private func addVideoInput(videoDeviceInput: AVCaptureDeviceInput) throws {
         guard videoSession.canAddInput(videoDeviceInput) else {
             throw SessionError.addVideoInputError

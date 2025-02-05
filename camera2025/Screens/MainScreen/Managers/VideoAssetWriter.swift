@@ -20,7 +20,7 @@ final class VideoAssetWriter {
     private var isFirstVideoFrameRecieved = false
     private var isInputsSetuped = false
 
-    private var assetWriter: AVAssetWriter
+    private let assetWriter: AVAssetWriter
     private let captureResolution: CGSize
 
     init(captureResolution: CGSize, currentSegmentFilePathURL: URL) throws {

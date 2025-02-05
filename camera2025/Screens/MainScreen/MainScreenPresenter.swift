@@ -20,18 +20,15 @@ final class MainScreenPresenter: NSObject {
         }
     })
 
-    private let photoCaptureObserver = PhotoCaptureObserver()
-
     private let mainMediaManager: MainMediaManager
 
     init(mainMediaManager: MainMediaManager) {
         self.mainMediaManager = mainMediaManager
         super.init()
-        photoCaptureObserver.delegate = self
     }
 
     func startSession() async {
-        await mainMediaManager.startCapture(photoNotificationsObserver: photoCaptureObserver)
+        await mainMediaManager.startCapture(photoNotificationsObserver: self)
     }
 
     private func handleAction(_ action: Action) {
@@ -78,20 +75,38 @@ final class MainScreenPresenter: NSObject {
     }
 }
 
-extension MainScreenPresenter: PhotoCaptureDelegate {
+@MainActor
+extension MainScreenPresenter: @preconcurrency AVCapturePhotoCaptureDelegate {
     
-    func photoWillCaptured() {
+    func photoOutput(
+        _ output: AVCapturePhotoOutput,
+        willCapturePhotoFor resolvedSettings: AVCaptureResolvedPhotoSettings
+    ) {
 
     }
     
-    func photoDataCreated(data: Data) {
-        Task { @MainActor in
+    func photoOutput(
+        _ output: AVCapturePhotoOutput,
+        didFinishProcessingPhoto photo: AVCapturePhoto,
+        error: Error?
+    ) {
+        Task {
+            guard let data = photo.fileDataRepresentation() else { return }
             try? await mainMediaManager.savePhotoInGallery(data)
-            model.isTakingPhotoPossible = true
+            onTakingPhotoPossible()
         }
     }
     
-    func photoDidCaptured() {
+    func photoOutput(
+        _ output: AVCapturePhotoOutput,
+        didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings,
+        error: Error?
+    ) {
 
+    }
+
+    @MainActor
+    private func onTakingPhotoPossible() {
+        model.isTakingPhotoPossible = true
     }
 }
