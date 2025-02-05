@@ -55,9 +55,9 @@ final class VideoSessionManager {
         if let connection = videoOutput.connection(with: .video) {
             connection.videoOrientation = .portrait
 
-//            if connection.isVideoStabilizationSupported {
-//                connection.preferredVideoStabilizationMode = .standard
-//            }
+            if connection.isVideoStabilizationSupported {
+                connection.preferredVideoStabilizationMode = .standard
+            }
         }
 
         videoSession.commitConfiguration()

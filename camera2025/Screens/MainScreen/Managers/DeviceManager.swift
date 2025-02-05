@@ -42,14 +42,6 @@ final class DeviceManager {
         } else {
             throw SessionError.addAudioInputError
         }
-        
-        if let videoConnection = videoOutput.connection(with: .video) {
-            videoConnection.videoOrientation = .portrait
-            
-            if videoConnection.isVideoStabilizationSupported {
-                videoConnection.preferredVideoStabilizationMode = .standard
-            }
-        }
     }
 
     func start(

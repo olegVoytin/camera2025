@@ -21,45 +21,169 @@ final class VideoRecordingManager: NSObject {
 
     private var previousVideoOrientation = AVCaptureVideoOrientation.portrait
 
-    @MainMediaActor override init() {}
+    // MARK: - Свойства для работы с сегментами (пауза/возобновление)
+    /// Храним пути к файлам сегментов
+    private var segments: [URL] = []
+    /// Индекс текущего сегмента
+    private var currentSegmentIndex: Int = 0
 
-    func startVideoRecording(captureResolution: CGSize) throws {
-        let fileName = UUID().uuidString
-        let assetWriter = VideoAssetWriter(fileName: fileName, captureResolution: captureResolution)
-        try assetWriter.setupWriter()
-        self.assetWriter = assetWriter
+    private var fileName: String?
+    private var recordedVideoFileURL: URL?
 
-        recordingState = .start
+    // MARK: - Пути к файлам
+    private var videoDirectoryPath: String {
+        let dir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        return dir + "/Videos"
     }
 
-    func stopVideoRecording() async throws {
+    /// Путь к файлу текущего сегмента
+    private var currentSegmentFilePathURL: URL {
+        guard let fileName else { return URL(fileURLWithPath: "") }
+        let filePath = videoDirectoryPath + "/\(fileName)_segment\(currentSegmentIndex)"
+        return URL(fileURLWithPath: filePath).appendingPathExtension("mov")
+    }
+
+    /// Путь к итоговому объединённому файлу
+    private var finalMergedFileURL: URL {
+        guard let fileName else { return URL(fileURLWithPath: "") }
+        let filePath = videoDirectoryPath + "/merged_\(fileName)"
+        return URL(fileURLWithPath: filePath).appendingPathExtension("mov")
+    }
+
+    @MainMediaActor override init() {}
+
+    func startNewRecording(captureResolution: CGSize) throws {
+        segments = []
+        currentSegmentIndex = 0
+        recordedVideoFileURL = nil
+
+        // Удаляем старую папку с видео (если существует) только один раз
+        if FileManager.default.fileExists(atPath: videoDirectoryPath) {
+            try FileManager.default.removeItem(atPath: videoDirectoryPath)
+        }
+        try FileManager.default.createDirectory(
+            atPath: videoDirectoryPath,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+
+        try recordNewSegment(captureResolution: captureResolution)
+    }
+
+    func pauseRecording() async {
+        guard let assetWriter,
+              recordingState == .recording else { return }
+
+        recordingState = .paused
+
+        await assetWriter.finishWriting()
+        segments.append(currentSegmentFilePathURL)
+
+        self.assetWriter = nil
+    }
+
+    func resumeRecording(captureResolution: CGSize) async throws {
+        guard recordingState == .paused else { return }
+
+        currentSegmentIndex += 1
+
+        try recordNewSegment(captureResolution: captureResolution)
+    }
+
+    func stopRecording() async throws {
         guard let assetWriter,
               recordingState == .recording else { return }
 
         recordingState = .idle
 
-        try await assetWriter.finishRecording()
+        await assetWriter.finishWriting()
+        segments.append(currentSegmentFilePathURL)
 
-        if let recordedVideoFileURL = assetWriter.recordedVideoFileURL {
+        try await mergeSegments()
+
+        if let recordedVideoFileURL = recordedVideoFileURL {
             try await saveVideoInGallery(url: recordedVideoFileURL)
         }
 
         self.assetWriter = nil
     }
 
-    func rotateVideoOutput() async throws {
-        recordingState = .paused
-        try! await assetWriter?.pauseRecording()
+    private func recordNewSegment(captureResolution: CGSize) throws {
+        let fileName = UUID().uuidString
+        self.fileName = fileName
 
-        let currentOrientation = await getDeviceOrientation()
-        await assetWriter?.rotateVideoRelatedOrientation(
-            isVideoRecordStartedFromFrontCamera: true,
-            previousVideoOrientation: previousVideoOrientation,
-            currentOrientation: currentOrientation
+        let assetWriter = try VideoAssetWriter(
+            captureResolution: captureResolution,
+            currentSegmentFilePathURL: currentSegmentFilePathURL
+        )
+        self.assetWriter = assetWriter
+
+        recordingState = .start
+    }
+
+    /// Объединяет записанные сегменты в один файл с помощью AVMutableComposition и AVAssetExportSession
+    private func mergeSegments() async throws {
+        let composition = AVMutableComposition()
+        guard let compositionVideoTrack = composition.addMutableTrack(
+            withMediaType: .video,
+            preferredTrackID: kCMPersistentTrackID_Invalid
+        ) else {
+            throw AssetWriterError.failedToCreateFileURL
+        }
+        let compositionAudioTrack = composition.addMutableTrack(
+            withMediaType: .audio,
+            preferredTrackID: kCMPersistentTrackID_Invalid
         )
 
-        try assetWriter?.resumeRecording()
-        recordingState = .start
+        var currentTime = CMTime.zero
+
+        for segmentURL in segments {
+            let asset = AVAsset(url: segmentURL)
+            let timeRange = CMTimeRange(start: .zero, duration: asset.duration)
+
+            // Вставляем видео-трек
+            if let assetVideoTrack = asset.tracks(withMediaType: .video).first {
+                try compositionVideoTrack.insertTimeRange(
+                    timeRange,
+                    of: assetVideoTrack,
+                    at: currentTime
+                )
+            }
+
+            // Вставляем аудио-трек (если есть)
+            if let assetAudioTrack = asset.tracks(withMediaType: .audio).first,
+               let compositionAudioTrack = compositionAudioTrack {
+                try compositionAudioTrack.insertTimeRange(
+                    timeRange,
+                    of: assetAudioTrack,
+                    at: currentTime
+                )
+            }
+
+            currentTime = CMTimeAdd(currentTime, asset.duration)
+        }
+
+        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else {
+            throw AssetWriterError.failedToCreateFileURL
+        }
+
+        exportSession.outputURL = finalMergedFileURL
+        exportSession.outputFileType = .mov
+        exportSession.timeRange = CMTimeRange(start: .zero, duration: composition.duration)
+
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            exportSession.exportAsynchronously {
+                if exportSession.status == .completed {
+                    continuation.resume(returning: ())
+                } else {
+                    let error = exportSession.error ?? NSError(domain: "MergeError", code: -1, userInfo: nil)
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+
+        recordedVideoFileURL = finalMergedFileURL
+        print("Сегменты объединены. Итоговый файл: \(finalMergedFileURL)")
     }
 
     nonisolated private func saveVideoInGallery(url: URL) async throws {

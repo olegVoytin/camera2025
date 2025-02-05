@@ -58,12 +58,12 @@ final class MainMediaManager {
         audioSessionManager.startRunning()
 
         let cameraResolution = deviceManager.getCameraResolution()
-        try await videoRecordingManager.startVideoRecording(captureResolution: cameraResolution)
+        try await videoRecordingManager.startNewRecording(captureResolution: cameraResolution)
     }
 
     func stopVideoRecording() async throws {
         audioSessionManager.stopRunning()
-        try await videoRecordingManager.stopVideoRecording()
+        try await videoRecordingManager.stopRecording()
     }
 
     func changeCameraPosition() async throws {
@@ -73,8 +73,6 @@ final class MainMediaManager {
             newInput: newInput,
             videoOutput: deviceManager.videoOutput
         )
-
-        try await videoRecordingManager.rotateVideoOutput()
     }
 }
 
