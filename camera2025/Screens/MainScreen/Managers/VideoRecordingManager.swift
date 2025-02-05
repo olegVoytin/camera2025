@@ -12,14 +12,12 @@ import Photos
 @VideoRecordingActor
 final class VideoRecordingManager: NSObject {
 
-    private enum RecordingState {
+    enum RecordingState {
         case idle, start, recording, paused
     }
 
-    private var recordingState: RecordingState = .idle
+    var recordingState: RecordingState = .idle
     private var assetWriter: VideoAssetWriter?
-
-    private var previousVideoOrientation = AVCaptureVideoOrientation.portrait
 
     // MARK: - Свойства для работы с сегментами (пауза/возобновление)
     /// Храним пути к файлам сегментов
@@ -70,7 +68,7 @@ final class VideoRecordingManager: NSObject {
         try recordNewSegment(captureResolution: captureResolution)
     }
 
-    func pauseRecording() async {
+    func pauseRecordingIfNeeded() async {
         guard let assetWriter,
               recordingState == .recording else { return }
 
@@ -82,7 +80,7 @@ final class VideoRecordingManager: NSObject {
         self.assetWriter = nil
     }
 
-    func resumeRecording(captureResolution: CGSize) async throws {
+    func resumeRecordingIfNeeded(captureResolution: CGSize) async throws {
         guard recordingState == .paused else { return }
 
         currentSegmentIndex += 1
@@ -252,7 +250,6 @@ extension VideoRecordingManager: AVCaptureAudioDataOutputSampleBufferDelegate, A
         let currentOrientation = await getDeviceOrientation()
         await assetWriter.rotateVideoRelatedOrientation(
             isVideoRecordStartedFromFrontCamera: true,
-            previousVideoOrientation: previousVideoOrientation,
             currentOrientation: currentOrientation
         )
 

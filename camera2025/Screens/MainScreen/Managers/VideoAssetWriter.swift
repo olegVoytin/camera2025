@@ -114,7 +114,6 @@ final class VideoAssetWriter {
 
     func rotateVideoRelatedOrientation(
         isVideoRecordStartedFromFrontCamera: Bool,
-        previousVideoOrientation: AVCaptureVideoOrientation,
         currentOrientation: UIDeviceOrientation
     ) async {
         guard let videoInput else { return }
@@ -122,7 +121,6 @@ final class VideoAssetWriter {
             transformableVideoInput: videoInput,
             currentTransform: videoInput.transform,
             isVideoRecordStartedFromFrontCamera: isVideoRecordStartedFromFrontCamera,
-            previousVideoOrientation: previousVideoOrientation,
             currentOrientation: currentOrientation
         )
     }
@@ -132,24 +130,22 @@ final class VideoAssetWriter {
         transformableVideoInput: AssetWriterInputTransformable,
         currentTransform: CGAffineTransform,
         isVideoRecordStartedFromFrontCamera: Bool,
-        previousVideoOrientation: AVCaptureVideoOrientation,
         currentOrientation: UIDeviceOrientation
     ) {
-        let isFrontPortrait = isVideoRecordStartedFromFrontCamera && previousVideoOrientation == .portrait
-
         let angle: CGFloat
-        switch (isFrontPortrait, currentOrientation) {
-        case (true, .landscapeLeft), (false, .landscapeRight):
+//        switch (isVideoRecordStartedFromFrontCamera, currentOrientation) {
+//        case (true, .landscapeLeft), (false, .landscapeRight):
             angle = .pi / 2
+//
+//        case (true, .landscapeRight), (false, .landscapeLeft):
+//            angle = -.pi / 2
+//
+//        default:
+//            return
+//        }
 
-        case (true, .landscapeRight), (false, .landscapeLeft):
-            angle = -.pi / 2
-
-        default:
-            return
-        }
-
-        transformableVideoInput.transform(newTransform: currentTransform.rotated(by: angle))
+//        transformableVideoInput.transform(newTransform: CGAffineTransform.identity)
+//        transformableVideoInput.transform(newTransform: currentTransform.rotated(by: angle))
     }
 
     // MARK: - Методы записи данных

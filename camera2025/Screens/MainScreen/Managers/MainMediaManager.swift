@@ -67,12 +67,16 @@ final class MainMediaManager {
     }
 
     func changeCameraPosition() async throws {
+        await videoRecordingManager.pauseRecordingIfNeeded()
+
         let (oldInput, newInput) = try deviceManager.setNewInput()
         videoSessionManager.setNewDeviceToSession(
             oldInput: oldInput,
             newInput: newInput,
             videoOutput: deviceManager.videoOutput
         )
+
+        try await videoRecordingManager.resumeRecordingIfNeeded(captureResolution: deviceManager.getCameraResolution())
     }
 }
 
