@@ -16,17 +16,26 @@ struct MainScreenView: View {
 
     var body: some View {
         ZStack {
+            Color.purple
+                .ignoresSafeArea()
+
             PreviewView(videoCaptureSession: videoCaptureSession)
 
             VStack {
                 Spacer()
                 HStack(spacing: 30) {
                     VideoButton(model: model)
-                    PhotoButton(model: model, onTakePhoto: onTakePhoto)
+
+                    if !model.isVideoRecordingActive {
+                        PhotoButton(model: model, onTakePhoto: onTakePhoto)
+                            .transition(.opacity)
+                    }
+
                     ChangeCameraButton(model: model)
                 }
                 .padding(.bottom, 20)
             }
+            .animation(.spring, value: model.isVideoRecordingActive)
 
             Color.white
                 .opacity(shutterOpacity)
@@ -113,6 +122,10 @@ private struct VideoButton: View {
                 .frame(width: innerSize, height: innerSize)
                 .animation(.spring, value: model.isVideoRecordingActive)
         }
+        .contentShape(
+            Circle()
+                .inset(by: -20)
+        )
         .onLongPressGesture(
             minimumDuration: 0,
             pressing: { pressed in
